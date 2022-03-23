@@ -1,7 +1,7 @@
 {
   "name": "canvas2d-zoom",
   "version": "0.1.0",
-  "description": "",
+  "description": "A webcomponent that adds zoom and pan behaviour to a canvas element",
   "type": "module",
   "exports": "./dist/canvas2d-zoom.js",
   "files": [
@@ -15,17 +15,16 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/cnoelle/canvas-zoom.git"
+    "url": "git+https://github.com/cnoelle/canvas2d-zoom.git"
   },
   "keywords": ["canvas", "zoom"],
   "author": "cnoelle",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/cnoelle/canvas-zoom/issues"
+    "url": "https://github.com/cnoelle/canvas2d-zoom/issues"
   },
-  "homepage": "https://github.com/cnoelle/canvas-zoom#readme",
+  "homepage": "https://github.com/cnoelle/canvas2d-zoom#readme",
   "devDependencies": {
-    "@types/node": "^17.0.21",
     "cpy-cli": "^4.1.0",
     "del-cli": "^4.0.1",
     "html-webpack-plugin": "^5.5.0",

@@ -1,11 +1,11 @@
 /**
  * A webcomponent that wraps a 2D HTML canvas element, making it zoomable and pannable.
  * The default tag name is "canvas2d-zoom".
- * Usage: add a tag <canvas2d-zoom> to your HTML, import this module in Javascript and call CanvasZoom.register() once.
+ * Usage: add a tag <canvas2d-zoom> to your HTML, import this module in Javascript and call Canvas2dZoom.register() once.
  * Drawing on the canvas should work like for ordinary 2D canvas, i.e. (in typescript, for javascript remove types)
  * <code>
- *      CanvasZoom.register();
- *      const canvas: CanvasZoom = document.querySelector("canvas2d-zoom");
+ *      Canvas2dZoom.register();
+ *      const canvas: Canvas2dZoom = document.querySelector("canvas2d-zoom");
  *      const ctx: CanvasRenderingContext2D = canvas.getContext("2d");
  *      ctx.beginPath();
  *      ...
@@ -14,44 +14,58 @@
 export declare class Canvas2dZoom extends HTMLElement {
     /**
      * Call once to register the new tag type "<canvas2d-zoom></canvas2d-zoom>"
-     * @param tag
+     * @param tag may be used to register a different tag name. 
      */
     static register(tag?: string): void;
+    /**
+     * Retrieve the registered tag type for this element type, or undefined if not registered yet.
+     */
     static tag(): string | undefined;
-    get debug(): boolean;
-    set debug(debug: boolean);
-    get width(): number;
-    set width(width: number);
-    get height(): number;
-    set height(height: number);
-    get zoom(): boolean;
-    set zoom(zoom: boolean);
-    get pan(): boolean;
-    set pan(pan: boolean);
-    get maxZoom(): number | undefined;
-    set maxZoom(max: number | undefined);
-    get minZoom(): number | undefined;
-    set minZoom(min: number | undefined);
-    get zoomFactor(): number;
+    /**
+     * Gets or sets the debug property. If set to true, some debug methods will be available on the HTMLElement. Default: false.
+     */
+    debug: boolean;
+    /**
+     * Gets or sets the height of a canvas element on a document.
+     */
+    height: number;
+    /**
+     * Gets or sets the width of a canvas element on a document.
+     */
+    width: number;
+    /**
+     * Controls whether the user can zoom in and out on the canvas. Default: true.
+     */
+    zoom: boolean;
+    /**
+     * Controls whether the user can pan/move the canvas. Default: true.
+     */
+    pan: boolean;
+    /**
+     * Controls the maximum zoom level of the canvas. A number > 1. Default: undefined
+     */
+    maxZoom: number | undefined;
+    /**
+     * Controls the minimum zoom level of the canvas. A number < 1. Default: undefined
+     */
+    minZoom: number | undefined;
     /**
      * The zoom factor determines how fast the zoom effect is, larger values lead to faster zoom.
-     * factor must be positive, and usually is greater than 1. Default value: 2.
+     * A positive number, usually greater than 1. Default value: 2.
      */
-    set zoomFactor(factor: number);
-    get overlapX(): number;
-    get overlapY(): number;
+    zoomFactor: number;
     /**
      * Indicates that upon zoom or pan operations a region beyond the horizontal vertical borders
      * of the canvas needs to be cleared (for positive values), resp. a certain area within
      * the visible range shall not be cleared (for negative values). Default: 0.
      */
-    set overlapX(pixels: number);
+    overlapX: number;
     /**
      * Indicates that upon zoom or pan operations a region beyond the visible vertical borders
      * of the canvas needs to be cleared (for positive values), resp. a certain area within
      * the visible range shall not be cleared (for negative values). Default: 0.
      */
-    set overlapY(pixels: number);
+    overlapY: number;
     /**
      * Returns an object that provides methods and properties for drawing and manipulating images and graphics on a 
      * 2D canvas element in a document. A context object includes information about colors, line widths, fonts, and 
@@ -62,8 +76,7 @@ export declare class Canvas2dZoom extends HTMLElement {
      */
     getContext(type: "2d", options?: CanvasRenderingContext2DSettings): CanvasRenderingContext2D;
     /**
-     * The wrapped canvas element. Usually this should not be used directly;
-     * all drawings via canvas().getContext("2d") will disappear on zoom and/or pan.
+     * Returns the wrapped canvas element.
      */
     canvas(): HTMLCanvasElement;
     /**
@@ -79,8 +92,8 @@ export declare class Canvas2dZoom extends HTMLElement {
     applyZoom(scale: number, center?: DOMPointInit): void;
     /**
      * Move/pan/translate the canvas.
-     * @param x
-     * @param y
+     * @param x number of horizontal pixels
+     * @param y number of vertical pixels
      */
     applyTranslation(x: number, y: number): void;
 }

@@ -1,8 +1,8 @@
 export class ContextProxy implements ProxyHandler<CanvasRenderingContext2D> {
 
     // zoom related
-    #maxZoom: number|undefined = 6;
-    #minZoom: number|undefined = 0.1;
+    #maxZoom: number|undefined = undefined;
+    #minZoom: number|undefined = undefined;
     #zoomFactor: number = 2;
     
     #clearXBorder: number = 0;
@@ -13,9 +13,10 @@ export class ContextProxy implements ProxyHandler<CanvasRenderingContext2D> {
 
     get(target: CanvasRenderingContext2D, p: PropertyKey): any {
         const result = (target as any)[p];
-        if (typeof result !== "function" || (typeof p === "string" && p.startsWith("get"))) {
+        if (typeof result !== "function")
+            return result;
+        if (typeof p === "string" && p.startsWith("get"))
             return result.bind(target);
-        }
         const pipe: Array<CallObject> = this.#pipe;
         function _internalFunc() {
             pipe.push({target: target, key: p, arguments:  arguments, type: "method"});

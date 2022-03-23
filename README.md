@@ -22,7 +22,7 @@ HTML example:
 <body>
     <canvas2d-zoom width="640" height="480" min-zoom="0.25" max-zoom="8"></canvas2d-zoom>
     <script type="module">
-        import { Canvas2dZoom } from "canvas2d-zoom"; // TODO unpkg link?
+        import { Canvas2dZoom } from "canvas2d-zoom";
         Canvas2dZoom.register();
         const canvas = document.querySelector("canvas2d-zoom");
         const ctx = canvas.getContext("2d");
@@ -47,7 +47,7 @@ ctx.stroke();
 
 ## Configuration
 
-All `canvas` attributes are supported, such as `width` and `height`. Furthermore,
+The `canvas` attributes `width` and `height` are supported, and furthermore:
 
 * **zoom**: A boolean value, can be used to disable zoom behaviour. Default value: `"true"`
 * **pan**: A boolean value, can be used to disable pan behaviour. Default value: `"true"`
@@ -75,7 +75,7 @@ Currently only mouse and keyboard interactions are supported (no mobile gestures
 
 ## How it works
 
-The element remembers all calls to the [CanvasRenderingContext2D](https://developer.mozilla.org/de/docs/Web/API/CanvasRenderingContext2D) methods relevant to drawing, such `ctx.beginPath()`, `ctx.rect()` or `ctx.stroke()`. When the user pans or zooms (via mouse or keyboard interactions), the canvas is cleared, a transformation appropriate for the zoom and pan state is set, and the canvas is redrawn.
+The element remembers all calls to the [CanvasRenderingContext2D](https://developer.mozilla.org/de/docs/Web/API/CanvasRenderingContext2D) methods relevant to drawing, such as `ctx.beginPath()`, `ctx.rect()` or `ctx.stroke()`. When the user pans or zooms (via mouse or keyboard interactions), the canvas is cleared, a transformation appropriate for the zoom and pan state is set, and the canvas is redrawn.
 
 ## Development
 
