@@ -4,6 +4,7 @@ This package provides a webcomponent `<canvas2d-zoom>` that can be used like a 2
 
 ## Content
 
+* [Example](#example)
 * [Installation](#installation)
 * [Usage](#usage)
 * [Configuration](#configuration)
@@ -11,6 +12,10 @@ This package provides a webcomponent `<canvas2d-zoom>` that can be used like a 2
 * [How it works](#how-it-works)
 * [Development](#development)
 * [License](#license)
+
+## Example
+
+https://cnoelle.github.io/canvas2d-zoom/index.html
 
 ## Installation
 
@@ -91,7 +96,7 @@ The element remembers all calls to the [CanvasRenderingContext2D](https://develo
 
 * Prerequisites: NodeJS/npm (a current version)
 * Install dependencies: `npm install`
-* Run: a sample HTML page is included in the repository, see [index.html](./index.html). Start the dev webserver with `npm run start`, then open the browser at http://localhost:8080.
+* Run: a sample HTML page is included in the repository, see [index.html](./index.html). Start the dev webserver with `npm run start`, then open the browser at http://localhost:8080. Note: in order to run the sample page with the current source code instead of the latest published version replace the url https://unpkg.com/canvas2d-zoom@latest/dist/canvas2d-zoom.js by *"./bundle.js"* at the end of the html file.
 * Tests: not yet
 
 ## License
