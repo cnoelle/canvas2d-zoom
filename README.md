@@ -4,6 +4,7 @@ This package provides a webcomponent `<canvas2d-zoom>` that can be used like a 2
 
 ## Content
 
+* [Installation](#installation)
 * [Usage](#usage)
 * [Configuration](#configuration)
 * [Interactions](#interactions)
@@ -11,9 +12,18 @@ This package provides a webcomponent `<canvas2d-zoom>` that can be used like a 2
 * [Development](#development)
 * [License](#license)
 
+## Installation
+
+Using `npm`:
+```
+npm install canvas2d-zoom 
+```
+
 ## Usage
 
-HTML example:
+Import the project as an ES module, call `Canvas2dZoom.register()` once in your javascript, and add a tag `<canvas2d-zoom>` to your HTML. Drawing on the canvas works the same as for ordinary `<canvas>` elements.
+
+**HTML standalone example**:
 
 ```html
 <!DOCTYPE html>
@@ -22,7 +32,7 @@ HTML example:
 <body>
     <canvas2d-zoom width="640" height="480" min-zoom="0.25" max-zoom="8"></canvas2d-zoom>
     <script type="module">
-        import { Canvas2dZoom } from "canvas2d-zoom";
+        import { Canvas2dZoom } from "https://unpkg.com/canvas2d-zoom@latest/dist/canvas2d-zoom.js";
         Canvas2dZoom.register();
         const canvas = document.querySelector("canvas2d-zoom");
         const ctx = canvas.getContext("2d");
@@ -33,7 +43,7 @@ HTML example:
 </body>
 ```
 
-Typescript example:
+**Typescript example**:
 
 ```javascript
 import { Canvas2dZoom } from "canvas2d-zoom";
