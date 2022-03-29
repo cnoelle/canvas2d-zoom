@@ -1,6 +1,6 @@
 import { ContextProxy } from "./ContextProxy.js";
 import { MouseEventHandler } from "./MouseEventHandler.js";
-import { MouseEventListener, Point } from "./internalTypes.js";
+import { MouseEventListener, Point, DoubleClickMode } from "./internalTypes.js";
 
 /**
  * A webcomponent that wraps a 2D HTML canvas element, making it zoomable and pannable.
@@ -21,7 +21,7 @@ export class Canvas2dZoom extends HTMLElement {
     private static _tag: string|undefined;
 
     static get observedAttributes() {
-        return ["debug", "width", "height", "zoom", "pan", "max-zoom", "min-zoom", "zoom-factor"]; 
+        return ["debug", "width", "height", "zoom", "pan", "max-zoom", "min-zoom", "zoom-factor", "double-click-mode"]; 
     }
 
     /**
@@ -63,12 +63,15 @@ export class Canvas2dZoom extends HTMLElement {
         this.#canvas.addEventListener("wheel", this.#noopZoomListener);
         const keyListener = (event: KeyboardEvent) => {
             const isZoom: boolean = event.key === "+" || event.key === "-";
+            const isZoomReset: boolean = event.key === "Enter";
             const isTranslation: boolean = event.key.startsWith("Arrow");
-            if (event.ctrlKey && ((isZoom && this.#zoom) || (isTranslation && this.#pan))) {
+            if (event.ctrlKey && (((isZoom || isZoomReset) && this.#zoom) || (isTranslation && this.#pan))) {
                 event.preventDefault();
                 if (isZoom) {
                     const factor: number = this.#proxy.getZoomFactor();
                     this.applyZoom(event.key === "+" ? factor : 1/factor, this.#lastFocusPoint);
+                } else if (isZoomReset) {
+                    this.resetZoomPan();
                 } else if (isTranslation) {
                     // TODO configurable translation step?
                     const vector: Point = event.key === "ArrowUp" ? {x: 0, y: 10} :
@@ -108,7 +111,10 @@ export class Canvas2dZoom extends HTMLElement {
                 if (frac >= 1)
                     return;
                 this.applyZoom(1/frac, { x: midx, y: midy });
-            }
+            },
+            reset: () => this.resetZoomPan(),
+            zoomed: (inOrOut: boolean, center: DOMPointInit) => this.applyZoom(inOrOut ? 2 : 0.5, center)
+
         };
         const style: HTMLStyleElement = document.createElement("style");
         style.textContent = ":host { position: relative; display: block; }";
@@ -254,6 +260,23 @@ export class Canvas2dZoom extends HTMLElement {
         this.setAttribute("overlap-y", pixels+ "");
     }
 
+    get doubleClickMode(): "reset"|"zoom"|null {
+        return this.#mouseHandler.getDoubleClickMode();
+    }
+
+    /**
+     * Define action on double click of the user.
+     * "reset" => reset zoom and pan
+     * "zoom"  => zoom in (or out if ctrl key is pressed at the same time)
+     * null (default) => no action
+     */
+    set doubleClickMode(mode: "reset"|"zoom"|null) {
+        if (!mode)
+            this.removeAttribute("double-click-mode");
+        else
+            this.setAttribute("double-click-mode", mode);
+    }
+
     // ============= Internal methods ===============
 
     connectedCallback() {
@@ -288,6 +311,11 @@ export class Canvas2dZoom extends HTMLElement {
                 const factor: number = parseFloat(newValue);
                 if (factor > 0 && isFinite(factor))
                     this.#proxy.setZoomFactor(factor);
+                break;
+            case "double-click-mode":
+                const dcm: string = newValue?.toLowerCase();
+                const dcmValue: DoubleClickMode = dcm === "reset" || dcm === "zoom" ? dcm : null;
+                this.#mouseHandler.setDoubleClickMode(dcmValue);
                 break;
             case "debug":
                 const debug: boolean = newValue?.toLowerCase() === "true";

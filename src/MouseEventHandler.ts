@@ -1,4 +1,4 @@
-import { Point, MouseEventListener } from "./internalTypes.js";
+import { Point, MouseEventListener, DoubleClickMode } from "./internalTypes.js";
 
 /**
  * Supports two modes: zoom/pan
@@ -17,6 +17,7 @@ export class MouseEventHandler {
     #panMode: boolean = false;
     #downAnchor: Point|null = null;
     #lastSeen: Point|null = null;
+    #doubleClickMode: DoubleClickMode = null;
 
     private _removeMouseListeners() {
         this.element.removeEventListener("pointermove", this.#mouseMoveListener);
@@ -88,7 +89,26 @@ export class MouseEventHandler {
         this.#mouseUpListener = this.#mouseUp.bind(this);
         this.#mouseMoveListener = this.#mouseMove.bind(this);
         element.addEventListener("pointerdown", this.#mouseDown.bind(this));
+        element.addEventListener("dblclick", event => {
+            if (this.#doubleClickMode === null)
+                return;
+            switch (this.#doubleClickMode) {
+            case "reset":
+                listener.reset();
+                break;
+            case "zoom":
+                listener.zoomed(!event.ctrlKey, {x: event.offsetX, y: event.offsetY});
+                break;
+            }
+        });
     }
 
+    setDoubleClickMode(mode: DoubleClickMode) {
+        this.#doubleClickMode = mode;
+    }
+
+    getDoubleClickMode(): DoubleClickMode {
+        return this.#doubleClickMode;
+    }
 
 }

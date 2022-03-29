@@ -67,6 +67,13 @@ export declare class Canvas2dZoom extends HTMLElement {
      */
     overlapY: number;
     /**
+     * Define action on double click of the user.
+     * "reset": reset zoom and pan
+     * "zoom": zoom in, or out if ctrl key is pressed at the same time
+     * null (default): no action
+     */
+    doubleClickMode: "reset"|"zoom"|null;
+    /**
      * Returns an object that provides methods and properties for drawing and manipulating images and graphics on a 
      * 2D canvas element in a document. A context object includes information about colors, line widths, fonts, and 
      * other graphic parameters that can be drawn on a canvas.

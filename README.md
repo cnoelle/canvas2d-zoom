@@ -69,11 +69,12 @@ The `canvas` attributes `width` and `height` are supported, and furthermore:
 * **max-zoom** (property: **maxZoom**): A positive number, typically > 1, representing the maximum scale value. Example: 8. Default value: `undefined` 
 * **min-zoom** (property: **minZoom**): A positive number, typically <= 1, the minimum scale value. Example: 0.125. Default value: `undefined` 
 * **zoom-factor** (property: **zoomFactor**): A number > 1 that determines the zoom velocity. Default value: 2. 
+* **double-click-mode** (property: **doubleClickMode**): Either "reset" (reset zoom and pan state on doubleclick) or "zoom" (zoom in on doubleclick, or zoom out if ctrl key is pressed at the same time) or absent (default, no action).
 
 
 **Example**
 ```html
-<canvas2d-zoom width="640" height="480" pan="false" zoom="true" max-zoom="8" min-zoom="0.125"></canvas2d-zoom>
+<canvas2d-zoom width="640" height="480" pan="false" zoom="true" max-zoom="8" min-zoom="0.125" double-click-mode="reset"></canvas2d-zoom>
 ```
 
 ## Interactions
@@ -82,11 +83,15 @@ Currently only mouse and keyboard interactions are supported (no mobile gestures
 
 **Zoom**
 * Mouse wheel
-* *Ctrl* + '+' (zoom in) or *Ctrl* + '-' (zoom out) (requires focus on canvas, e.g. by clicking the canvas once)
+* *Ctrl* + '+' (zoom in) or *Ctrl* + '-' (zoom out) (requires focus on canvas, e.g. by clicking the canvas once) 
 
 **Pan**
 * Mouse drag
 * *Ctrl* + keyboard arrow buttons  (requires focus on canvas, e.g. by clicking the canvas once)
+
+**Reset zoom and pan**
+* Mouse double click, if attribute *double-click-mode* is set to *reset*
+* *Ctrl* + *Enter* (requires focus on canvas, e.g. by clicking the canvas once) 
 
 ## How it works
 
