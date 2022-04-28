@@ -58,7 +58,7 @@ export class Canvas2dZoom extends HTMLElement {
     constructor() {
         super();
         this.#canvas = document.createElement("canvas");
-        this.#proxy = new ContextProxy();
+        this.#proxy = new ContextProxy(this);
         this.#zoomListener = this.#proxy.wheel.bind(this.#proxy);
         this.#canvas.addEventListener("wheel", this.#noopZoomListener);
         const keyListener = (event: KeyboardEvent) => {
@@ -400,4 +400,17 @@ export class Canvas2dZoom extends HTMLElement {
         this.#proxy.translate(x, y);
     }
 
+}
+
+/**
+ * The element dispatches events of type CustomEvent<ZoomPan>. Access the ZoomPan object 
+ * via the *detail* property of an event:
+ *   canvas2dZoomElement.addEventListener("zoom", event => console.log(event.detail));
+ */
+export interface ZoomPan {
+    zoom: boolean;
+    pan: boolean;
+    currentTransformation: DOMMatrix;
+    previousTransformation: DOMMatrix;
+    context: CanvasRenderingContext2D;
 }

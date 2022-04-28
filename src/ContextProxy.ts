@@ -1,3 +1,5 @@
+import { ZoomPan } from "./canvas2d-zoom.js";
+
 export class ContextProxy implements ProxyHandler<CanvasRenderingContext2D> {
 
     // zoom related
@@ -10,6 +12,8 @@ export class ContextProxy implements ProxyHandler<CanvasRenderingContext2D> {
 
     // drawing operations
     readonly #pipe: Array<CallObject> = [];
+
+    constructor(private readonly _eventDispatcher: HTMLElement) {}
 
     get(target: CanvasRenderingContext2D, p: PropertyKey): any {
         const result = (target as any)[p];
@@ -58,11 +62,14 @@ export class ContextProxy implements ProxyHandler<CanvasRenderingContext2D> {
             return;
         const ctx: CanvasRenderingContext2D = this.#pipe[0].target;
         ctx.restore();
+        const oldTrafo: DOMMatrix = ctx.getTransform();
         ctx.setTransform(1, 0, 0, 1, 0, 0);
         ctx.save();
+        const newTrafo: DOMMatrix = ctx.getTransform();
         ctx.canvas.width = ctx.canvas.width;
         ctx.clearRect(-this.#clearXBorder, -this.#clearYBorder, ctx.canvas.width + this.#clearXBorder, ctx.canvas.height + this.#clearYBorder);
         this.applyPipe();
+        this._dispatch(ctx, oldTrafo, newTrafo, true, true);
     }
 
     // FIXME is this efficient? Can we do better?
@@ -71,6 +78,22 @@ export class ContextProxy implements ProxyHandler<CanvasRenderingContext2D> {
         ctx.setTransform(1, 0, 0, 1, 0, 0);
         ctx.clearRect(-this.#clearXBorder, -this.#clearYBorder, ctx.canvas.width + this.#clearXBorder, ctx.canvas.height + this.#clearYBorder);
         ctx.restore();
+    }
+
+    private _dispatch(ctx: CanvasRenderingContext2D, oldTransform: DOMMatrix, newTransform: DOMMatrix, zoom: boolean, pan: boolean) {
+        // could make sense to set this to cancelable and prevent the zoom operation from happening in this case....
+        this._eventDispatcher.dispatchEvent(new CustomEvent<ZoomPan>("zoom", { 
+            bubbles: true, 
+            composed: true, 
+            cancelable: false, 
+            detail: {
+                zoom: zoom,
+                pan: pan,
+                previousTransformation: oldTransform,
+                currentTransformation: newTransform,
+                context: ctx
+            }})
+        ); 
     }
 
     zoom(relativeScale: number, center: DOMPointInit) {
@@ -97,6 +120,8 @@ export class ContextProxy implements ProxyHandler<CanvasRenderingContext2D> {
         ctx.save();
         const trafo: DOMMatrix = ctx.getTransform();
         this.applyPipe(trafo);
+        this._dispatch(ctx, currentTransform, trafo, true, false);
+
     }
 
     translate(x: number, y: number) {
@@ -104,6 +129,7 @@ export class ContextProxy implements ProxyHandler<CanvasRenderingContext2D> {
             return;
         const ctx: CanvasRenderingContext2D = this.#pipe[0].target;
         ctx.restore();
+        const oldTransform: DOMMatrix = ctx.getTransform();
         /*
         const inv: DOMMatrix = ctx.getTransform().inverse();
         const transformedOrigin: DOMPoint = inv.transformPoint({x:0, y:0});
@@ -115,6 +141,7 @@ export class ContextProxy implements ProxyHandler<CanvasRenderingContext2D> {
         ctx.save();
         const trafo: DOMMatrix = ctx.getTransform();
         this.applyPipe(trafo);
+        this._dispatch(ctx, oldTransform, trafo, false, true);
     }
 
     wheel(event: WheelEvent) {
@@ -174,6 +201,7 @@ export class ContextProxy implements ProxyHandler<CanvasRenderingContext2D> {
         const currentTransform: DOMMatrix = ctx.getTransform();
         this.applyPipe(currentTransform);
         ctx.save();
+        this._dispatch(ctx, currentTransform, currentTransform, false, false);
     }
 
 }
@@ -192,3 +220,4 @@ type CallObject = {
         value: any;
     }
 )
+
