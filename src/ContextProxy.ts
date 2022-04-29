@@ -81,6 +81,8 @@ export class ContextProxy implements ProxyHandler<CanvasRenderingContext2D> {
     }
 
     private _dispatch(ctx: CanvasRenderingContext2D, oldTransform: DOMMatrix, newTransform: DOMMatrix, zoom: boolean, pan: boolean) {
+        ctx.save();
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
         // could make sense to set this to cancelable and prevent the zoom operation from happening in this case....
         this._eventDispatcher.dispatchEvent(new CustomEvent<ZoomPan>("zoom", { 
             bubbles: true, 
@@ -90,10 +92,11 @@ export class ContextProxy implements ProxyHandler<CanvasRenderingContext2D> {
                 zoom: zoom,
                 pan: pan,
                 previousTransformation: oldTransform,
-                currentTransformation: newTransform,
+                newTransformation: newTransform,
                 context: ctx
             }})
         ); 
+        ctx.restore();
     }
 
     zoom(relativeScale: number, center: DOMPointInit) {
