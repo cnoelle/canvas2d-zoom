@@ -425,7 +425,9 @@ export class Canvas2dZoom extends HTMLElement {
  * 
  * The element also dispatches events of type CustomEvent<ZoomPan>. Access the ZoomPan object 
  * via the *detail* property of an event:
- *   canvas2dZoomElement.addEventListener("zoom", event => console.log(event.detail));
+ * <code>
+ *     canvas2dZoomElement.addEventListener("zoom", event => console.log(event.detail));
+ * </code>
  */
 export interface ZoomPan {
     zoom: boolean;

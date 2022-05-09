@@ -15,6 +15,9 @@
 
       document.addEventListener("DOMContentLoaded", () => {
         const canvas = document.querySelector("canvas2d-zoom");
+        // FIXME
+        //canvas.addEventListener("zoom", ev => console.log("ev", ev));
+
         document.querySelector("#reset").addEventListener("click", _ => canvas.resetZoomPan());
         const ctx = canvas.getContext("2d");
 
@@ -77,7 +80,14 @@
       // Here we use the latest published version from npmjs via unpkg"
       // For local development replace the url by "./bundle.js" and run `npm run start`. 
       // This will start a webpack dev server that generates the file bundle.js from src/canvas2d-zoom.ts
-      import { Canvas2dZoom } from "https://unpkg.com/canvas2d-zoom@latest/dist/canvas2d-zoom.js";
+      import { Canvas2dZoom } from /* "https://unpkg.com/canvas2d-zoom@latest/dist/canvas2d-zoom.js" */ "./bundle.js";
       Canvas2dZoom.register();
+    </script>
+    <script type="module">
+      // Here we use the latest published version from npmjs via unpkg"
+      // For local development replace the url by "./LineUtils.js" and run `npm run build` followed by `npm run start` 
+      // (contrary to bundle.js above) this one needs an explicit build for changes to take effect). 
+      import { LineUtils } from /* "https://unpkg.com/canvas2d-zoom@latest/dist/LineUtils.js" */ "./LineUtils.js";
+      LineUtils.drawAxes(document.querySelector("canvas2d-zoom"), {x: { lineConfig: { label: { text: "x" }}}, y: { lineConfig: { label: { text: "y" }}}});
     </script>
 </body>

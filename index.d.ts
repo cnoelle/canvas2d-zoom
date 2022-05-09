@@ -103,4 +103,33 @@ export declare class Canvas2dZoom extends HTMLElement {
      * @param y number of vertical pixels
      */
     applyTranslation(x: number, y: number): void;
+
+    /**
+     * Use this method for drawing elements with custom scaling and pan behaviour, or completely static elements.
+     * The listener will be called once with the current state and then on every state change.
+     * @param listener 
+     */
+    drawCustom(listener: (stateChange: ZoomPan, width: number, height: number) => void): void
+}
+
+/**
+ * For use in the drawCustom method. 
+ * 
+ * The element also dispatches events of type CustomEvent<ZoomPan>. Access the ZoomPan object 
+ * via the *detail* property of an event:
+ * <code>
+ *     canvas2dZoomElement.addEventListener("zoom", event => console.log(event.detail));
+ * </code>
+ */
+export declare interface ZoomPan {
+    zoom: boolean;
+    pan: boolean;
+    newTransformation: DOMMatrix;
+    previousTransformation: DOMMatrix;
+    /**
+     * Use this context for adding one-off elements to the canvas. Elements drawn via this 
+     * context will disappear after the next zoom or pan operation, they need to be redrawn 
+     * in every callback. This can be used for custom scaling/pan behaviour.
+     */
+    context: CanvasRenderingContext2D;
 }
