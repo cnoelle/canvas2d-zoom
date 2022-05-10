@@ -21,7 +21,8 @@ export class Canvas2dZoom extends HTMLElement {
     private static _tag: string|undefined;
 
     static get observedAttributes() {
-        return ["debug", "width", "height", "zoom", "pan", "max-zoom", "min-zoom", "zoom-factor", "double-click-mode"]; 
+        return ["debug", "width", "height", "zoom", "pan", "max-zoom", "min-zoom", "zoom-factor", "double-click-mode",
+                "circle-min-radius", "rect-min-width", "rect-min-height"]; 
     }
 
     /**
@@ -277,6 +278,51 @@ export class Canvas2dZoom extends HTMLElement {
             this.setAttribute("double-click-mode", mode);
     }
 
+    /**
+     * Set a minimum width for rectangles; when zooming out and the limit is hit,
+     * the rectangle width will not shrink any further.
+     */
+    set rectMinWidth(width: number|undefined) {
+        if (width)
+            this.setAttribute("rect-min-width", width + "");
+        else
+            this.removeAttribute("rect-min-width");
+    }
+
+    get rectMinWidth(): number|undefined {
+        return this.#proxy.getRectMinWidth();
+    }
+
+    /**
+     * Set a minimum height for rectangles; when zooming out and the limit is hit,
+     * the rectangle height will not shrink any further.
+     */
+    set rectMinHeight(height: number|undefined) {
+        if (height)
+            this.setAttribute("rect-min-height", height + "");
+        else
+            this.removeAttribute("rect-min-height");
+    }
+
+    get rectMinHeight(): number|undefined {
+        return this.#proxy.getRectMinHeight();
+    }
+
+    /**
+     * Set a minimum radius for circles/arcs; when zooming out and the limit is hit,
+     * the radius will not shrink any further.
+     */
+    set circleMinRadius(radius: number|undefined) {
+        if (radius)
+            this.setAttribute("circle-min-radius", radius + "");
+        else
+            this.removeAttribute("circle-min-radius");
+    }
+
+    get circleMinRadius(): number|undefined {
+        return this.#proxy.getCircleMinRadius();
+    }
+
     // ============= Internal methods ===============
 
     connectedCallback() {
@@ -333,6 +379,15 @@ export class Canvas2dZoom extends HTMLElement {
                 if (!isFinite(overlap))
                     throw new Error("Invalid attribute " + attr + ": " + newValue);
                 this.#proxy.setOverlap(attr === "overlap-x" ? overlap : undefined, attr === "overlap-y" ? overlap : undefined);
+            case "rect-min-width":
+                this.#proxy.setRectMinWidth(parseFloat(newValue) || undefined);
+                break;
+            case "rect-min-height":
+                this.#proxy.setRectMinHeight(parseFloat(newValue) || undefined);
+                break;
+            case "circle-min-radius":
+                this.#proxy.setCircleMinRadius(parseFloat(newValue) || undefined);
+                break;
             case "width":
             case "height":
                 // fallthrough

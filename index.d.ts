@@ -73,6 +73,25 @@ export declare class Canvas2dZoom extends HTMLElement {
      * null (default): no action
      */
     doubleClickMode: "reset"|"zoom"|null;
+
+    /**
+     * Set a minimum width for rectangles; when zooming out and the limit is hit,
+     * the rectangle width will not shrink any further.
+     */
+    rectMinWidth: number|undefined;
+
+    /**
+     * Set a minimum height for rectangles; when zooming out and the limit is hit,
+     * the rectangle height will not shrink any further.
+     */
+    rectMinHeight: number|undefined;
+
+    /**
+     * Set a minimum radius for circles/arcs; when zooming out and the limit is hit,
+     * the radius will not shrink any further.
+     */
+    circleMinRadius: number|undefined;
+
     /**
      * Returns an object that provides methods and properties for drawing and manipulating images and graphics on a 
      * 2D canvas element in a document. A context object includes information about colors, line widths, fonts, and 
