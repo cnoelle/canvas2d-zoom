@@ -13,10 +13,10 @@ export class MinimumSizeUtils {
             return args;
         const newArgs: Array<any> = Array.from(args);
         if (transformedWidth < minWidth) {
-            newArgs[2] = width / widthFactor;
+            newArgs[2] = minWidth / widthFactor;
         }
         if (transformedHeight < minHeight) {
-            newArgs[3] = height / heightFactor;
+            newArgs[3] = minHeight / heightFactor;
         }
         return newArgs;
     }
