@@ -116,19 +116,28 @@ export class LineUtils {
         const pos: LabelPosition = config.position || LabelPosition.BOTTOM_CENTER;
         const size: number = config.size || 10; // TODO
         const textWidth: number = config.text.length * size / 2; // TODO
+        const deltaY: number = y1 - y0;
+        const deltaX: number = x1 - x0;
+        const isVertical: boolean = Math.abs(deltaY) > Math.abs(deltaX);
         switch (pos) {
-        case LabelPosition.BOTTOM_CENTER: // TODO this really depends on whether the text is rotated or not!
-            return [(x1 - x0)/2 - textWidth / 2, (y1 - y0)/2 + 1.5 * size];
+        case LabelPosition.BOTTOM_CENTER:
+            return isVertical ? [Math.max(0, deltaX/2 - 2 * textWidth), deltaY / 2] :
+                [deltaX/2 - textWidth / 2, deltaY/2 + 1.5 * size];
         case LabelPosition.BOTTOM_RIGHT:
-            return [x1 - textWidth, y1 + 1.5 * size];
+            return isVertical ? [Math.max(0, x0 - 2 * textWidth), y0 - 1.5 * size] : // TODO check
+                [x1 - textWidth, y1 + 1.5 * size];
         case LabelPosition.BOTTOM_LEFT:
-            return [x0, y0 + 1.5 * size];
-        case LabelPosition.TOP_CENTER: // TODO this really depends on whether the text is rotated or not!
-            return [(x1 - x0)/2 - textWidth / 2, (y1 - y0)/2 - 1.5 * size];
+            return isVertical ? [Math.max(0, x1 - 2 * textWidth), y1 + 1.5 * size] : // TODO check
+                [x0, y0 + 1.5 * size];
+        case LabelPosition.TOP_CENTER:
+            return isVertical ? [Math.max(0, deltaX/2 + 1.5*size), deltaY / 2] : // TODO check
+                [deltaX/2 - textWidth / 2, deltaY/2 - 1.5 * size];
         case LabelPosition.TOP_RIGHT:
-            return [x1 - textWidth, y1 - 1.5 * size];
+            return isVertical ? [x0 + 1.5 *size, y0 - 1.5 * size] :// TODO check
+                [x1 - textWidth, y1 - 1.5 * size];
         case LabelPosition.TOP_LEFT:
-            return [x0, y0 - 1.5 * size];
+            return isVertical ? [x1 + 1.5 *size, y1 + 1.5 * size] :// TODO check
+                [x0, y0 - 1.5 * size];
         }
     }
 
