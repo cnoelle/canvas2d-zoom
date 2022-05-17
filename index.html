@@ -8,7 +8,7 @@
 <body>
     <h1>Canvas Zoom demo app</h1>
     <div style="display: flex; flex-wrap: wrap; column-gap: 1em;">
-      <canvas2d-zoom width="640" height="480" min-zoom="0.25" max-zoom="8" double-click-mode="reset"></canvas2d-zoom>
+      <canvas2d-zoom width="640" height="480" min-zoom="0.25" max-zoom="8" double-click-mode="reset" circle-min-radius="3"></canvas2d-zoom>
       <div><input type="button" value="Reset" id="reset"></div>
     </div>
     <script>
@@ -73,6 +73,14 @@
         ctx.resetTransform();
         ctx.beginPath();
         ctx.arc(20, 20, 15, 0, 2 * Math.PI);
+        ctx.fill();
+
+        // a small circle; when we zoom out this will hit the circle-min-radius limit and will
+        // not shrink any further
+        ctx.fillStyle = "darkred";
+        ctx.resetTransform();
+        ctx.beginPath();
+        ctx.arc(400, 200, 3, 0, 2 * Math.PI);
         ctx.fill();
       });
     </script>

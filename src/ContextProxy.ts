@@ -1,4 +1,5 @@
 import { ZoomPan } from "./canvas2d-zoom.js";
+import { MinimumSizeUtils } from "./minSize.js";
 
 export class ContextProxy implements ProxyHandler<CanvasRenderingContext2D> {
 
@@ -9,6 +10,11 @@ export class ContextProxy implements ProxyHandler<CanvasRenderingContext2D> {
     
     #clearXBorder: number = 0;
     #clearYBorder: number = 0;
+
+    // minimum size settings
+    #rectMinWidth: number|undefined;
+    #rectMinHeight: number|undefined;
+    #circleMinRadius: number|undefined;
 
     // drawing operations
     readonly #pipe: Array<CallObject> = [];
@@ -22,9 +28,11 @@ export class ContextProxy implements ProxyHandler<CanvasRenderingContext2D> {
         if (typeof p === "string" && p.startsWith("get"))
             return result.bind(target);
         const pipe: Array<CallObject> = this.#pipe;
+        const proxy = this;
         function _internalFunc() {
+            let a: IArguments;
             pipe.push({target: target, key: p, arguments:  arguments, type: "method"});
-            return result.bind(target)(...arguments);
+            return proxy.applyFunction(result.bind(target), p, arguments);
         }
         return _internalFunc;
     }
@@ -49,7 +57,7 @@ export class ContextProxy implements ProxyHandler<CanvasRenderingContext2D> {
                 } else if (trafo && prop === "resetTransform") {
                     target.setTransform(trafo);
                 } else {
-                    (target as any)[prop](...args);
+                    this.applyFunction((target as any)[prop].bind(target), prop, args, trafo);
                 }
             } else {
                 (target as any)[prop] = action.value;
@@ -111,11 +119,6 @@ export class ContextProxy implements ProxyHandler<CanvasRenderingContext2D> {
         }
         const domMatrix: DOMMatrix = currentTransform.inverse();
         const translationVector: DOMPoint = domMatrix.transformPoint(center);
-        /*
-        const transformedOrigin: DOMPoint = domMatrix.transformPoint({x:0, y:0});
-        const transformedHorizon : DOMPoint = domMatrix.transformPoint({x:ctx.canvas.width, y:ctx.canvas.height});
-        ctx.clearRect(transformedOrigin.x, transformedOrigin.y, 2*transformedHorizon.x, 2*transformedHorizon.y); 
-        */
         this._clear(ctx);
         ctx.translate(translationVector.x, translationVector.y);
         ctx.scale(relativeScale, relativeScale);
@@ -133,12 +136,6 @@ export class ContextProxy implements ProxyHandler<CanvasRenderingContext2D> {
         const ctx: CanvasRenderingContext2D = this.#pipe[0].target;
         ctx.restore();
         const oldTransform: DOMMatrix = ctx.getTransform();
-        /*
-        const inv: DOMMatrix = ctx.getTransform().inverse();
-        const transformedOrigin: DOMPoint = inv.transformPoint({x:0, y:0});
-        const transformedHorizon : DOMPoint = inv.transformPoint({x:ctx.canvas.width, y:ctx.canvas.height});
-        ctx.clearRect(transformedOrigin.x, transformedOrigin.y, 2*transformedHorizon.x, 2*transformedHorizon.y); 
-        */
         this._clear(ctx);
         ctx.translate(x, y);
         ctx.save();
@@ -192,6 +189,30 @@ export class ContextProxy implements ProxyHandler<CanvasRenderingContext2D> {
         return [this.#clearXBorder, this.#clearYBorder];
     }
 
+    setRectMinWidth(width: number|undefined) {
+        this.#rectMinWidth = width;
+    }
+
+    getRectMinWidth(): number|undefined {
+        return this.#rectMinWidth;
+    }
+
+    setRectMinHeight(height: number|undefined) {
+        this.#rectMinHeight = height;
+    }
+
+    getRectMinHeight(): number|undefined {
+        return this.#rectMinHeight;
+    }
+
+    setCircleMinRadius(radius: number|undefined) {
+        this.#circleMinRadius = radius;
+    }
+
+    getCircleMinRadius(): number|undefined {
+        return this.#circleMinRadius;
+    }
+
     pipe() {
         return this.#pipe;
     }
@@ -205,6 +226,19 @@ export class ContextProxy implements ProxyHandler<CanvasRenderingContext2D> {
         this.applyPipe(currentTransform);
         ctx.save();
         this._dispatch(ctx, currentTransform, currentTransform, false, false);
+    }
+
+    private applyFunction(fun: any, key: PropertyKey, args: Iterable<any>, trafo?: DOMMatrix): any {
+        if (key === "arc" && this.#circleMinRadius) {
+            // @ts-ignore
+            args = MinimumSizeUtils.arc(this.#circleMinRadius, args, trafo);
+        }
+         // @ts-ignore
+        else if (["rect", "fillRect", "strokeRect"].indexOf(key) >= 0 && (this.#rectMinHeight || this.#rectMinWidth)) {
+            // @ts-ignore
+            args = MinimumSizeUtils.rect(this.#rectMinWidth, this.#rectMinHeight, args, trafo);
+        }
+        return fun(...args);
     }
 
 }

@@ -70,6 +70,8 @@ The `canvas` attributes `width` and `height` are supported, and furthermore:
 * **min-zoom** (property: **minZoom**): A positive number, typically <= 1, the minimum scale value. Example: 0.125. Default value: `undefined` 
 * **zoom-factor** (property: **zoomFactor**): A number > 1 that determines the zoom velocity. Default value: 2. 
 * **double-click-mode** (property: **doubleClickMode**): Either "reset" (reset zoom and pan state on doubleclick) or "zoom" (zoom in on doubleclick, or zoom out if ctrl key is pressed at the same time) or absent (default, no action).
+* **circle-min-radius** (property: **circleMinRadius**): A minimum radius for circles/arcs. When zooming out and the limit is hit, the circle will not shrink any further. Default value: `undefined` (since 0.1.2)
+* **rect-min-width** and **rect-min-height** (properties **rectMinWidth** and **rectMinHeight**): Minimum width and height for rectangles. When zooming out and the limit is hit, the rectangle width or height will not shrink any further. Default value: `undefined` (since 0.1.2)
 
 
 **Example**
