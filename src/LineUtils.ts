@@ -3,19 +3,36 @@ import { Canvas2dZoom, ZoomPan } from "./canvas2d-zoom.js";
 // TODO proper label positions
 // TODO ticks
 // TODO styles (lines, labels, axes, arrows, ...)
-// TODO generate and distribute types
+// TODO generate types
+
+export enum LabelPosition {
+    TOP_CENTER = "top-center",
+    TOP_RIGHT = "top-right",
+    TOP_LEFT = "top-left",
+    BOTTOM_CENTER = "bottom-center",
+    BOTTOM_RIGHT = "bottom-right",
+    BOTTOM_LEFT = "bottom-left"
+};
 
 class AxesMgmt {
 
     private static readonly _DEFAULT_AXIS: SingleAxisConfig = {
         offsetBoundary: -1,
-        tickLength: 5, // TODO
+        ticks: {
+            length: 10,
+            numberTicks: 6,
+            width: 2
+        },
         lineConfig: {
             arrows: {
                 end: {length: 15, angle: Math.PI/6, filled: false }
             }
         }
     };
+
+    private static readonly _DEFAULT_LABEL_CONFIG: Partial<LabelConfig> = {
+        position: LabelPosition.BOTTOM_CENTER,
+    }
 
     readonly #x: boolean;
     readonly #y: boolean;
@@ -25,43 +42,107 @@ class AxesMgmt {
     constructor(_config: Partial<AxesConfig>) {
         this.#x = _config?.x !== false;
         this.#y = _config?.y !== false;
-        if (typeof _config?.x === "object") {
-            const xConfig: SingleAxisConfig = _config.x as SingleAxisConfig;
-            this.#xConfig = {...AxesMgmt._DEFAULT_AXIS, ...xConfig }; // TODO nested props
-            if (!this.#xConfig.lineConfig.arrows)
-                this.#xConfig.lineConfig.arrows = AxesMgmt._DEFAULT_AXIS.lineConfig.arrows; 
-        } else {
-            this.#xConfig = AxesMgmt._DEFAULT_AXIS;
-        }
-        if (typeof _config?.y === "object") {
-            const yConfig: SingleAxisConfig = _config.y as SingleAxisConfig;
-            this.#yConfig = {...AxesMgmt._DEFAULT_AXIS, ...yConfig }; // TODO nested props
-            if (!this.#yConfig.lineConfig.arrows)
-                this.#yConfig.lineConfig.arrows = AxesMgmt._DEFAULT_AXIS.lineConfig.arrows; 
-        } else {
-            this.#yConfig = AxesMgmt._DEFAULT_AXIS;
-        }
+        const merge = (config: boolean|Partial<SingleAxisConfig>, defaultConfig: SingleAxisConfig): SingleAxisConfig => {
+            const hasStartArrow: boolean = typeof config === "object" && config.lineConfig?.arrows?.start && !config.lineConfig?.arrows?.end;
+            const result: SingleAxisConfig = AxesMgmt._merge(typeof config === "object" ? config : undefined, defaultConfig);
+            if (result.lineConfig.label?.text)
+                AxesMgmt._merge(result.lineConfig.label, AxesMgmt._DEFAULT_LABEL_CONFIG);
+            if (hasStartArrow)
+                delete result.lineConfig.arrows.end;
+            return result;
+        };
+        this.#xConfig = merge(_config?.x, AxesMgmt._DEFAULT_AXIS);
+        this.#yConfig = merge(_config?.y, AxesMgmt._DEFAULT_AXIS);
     }
 
     draw(state: ZoomPan, width: number, height: number) {
         const ctx: CanvasRenderingContext2D = state.context;
-        ctx.strokeStyle = "black"; // TODO configurable
+        let xOffset: number = this.#yConfig.offsetBoundary;
+        if (xOffset < 0)
+            xOffset =  Math.min(Math.round(width/10), 25);
+        let yOffset: number = this.#xConfig.offsetBoundary;
+        if (yOffset < 0)
+            yOffset =  Math.min(Math.round(height/10), 25);
         if (this.#x) {
-            ctx.beginPath();
-            let yOffset: number = this.#xConfig.offsetBoundary;
-            if (yOffset < 0)
-                yOffset =  Math.min(Math.round(height/10), 20);
+            const c: SingleAxisConfig = this.#xConfig;
+            
             // @ts-ignore
-            LineUtils._drawLine(ctx, 0, height - yOffset, width, height - yOffset, this.#xConfig?.lineConfig);
+            LineUtils._drawLine(ctx, 0, height - yOffset, width, height - yOffset, c.lineConfig);
+            if (c.ticks) {
+                const config: TicksConfig = c.ticks as TicksConfig;
+                const ticks: Array<Tick> = AxesMgmt._getTickPositions(0, height - yOffset, width, height - yOffset, config, xOffset);
+                for (const tick of ticks) {
+                    const lineConfig: Partial<LineConfig> = {};
+                    if (tick.label) {
+                        lineConfig.label = { // TODO set stroke color, width etc
+                            text: tick.label,
+                            position: LabelPosition.BOTTOM_RIGHT // FIXME
+                        };
+                    }
+                    // @ts-ignore
+                    LineUtils._drawLine(ctx, tick.x, tick.y, tick.x, tick.y + config.length, lineConfig); // FIXME take into account rotation!
+                }
+            }
         }
         if (this.#y) {
-            ctx.beginPath();
-            let xOffset: number = this.#yConfig.offsetBoundary;
-            if (xOffset < 0)
-                xOffset =  Math.min(Math.round(width/10), 20);
+            const c: SingleAxisConfig = this.#yConfig;
+
             // @ts-ignore
-            LineUtils._drawLine(ctx, xOffset, height, xOffset, 0, this.#yConfig?.lineConfig);
+            LineUtils._drawLine(ctx, xOffset, height, xOffset, 0, c.lineConfig);
         }
+    }
+
+    private static _getTickPositions(x0: number, y0: number, x1: number, y1: number, config: TicksConfig, offset: number): Array<Tick> {
+        // @ts-ignore
+        const num: number = Math.round(config.values?.length || config.numberTicks);
+        const angle: number = Math.atan2(y0-y1, x1-x0);
+        const cos = Math.cos(angle) * offset;
+        const sin = Math.sin(angle) * offset;
+        const xStart: number = x0 + cos;
+        const xEnd: number = x1 - cos;
+        const yStart: number = y0 - sin;
+        const yEnd: number = y1 + sin;
+        const x: number = xEnd-xStart;
+        const y: number = yEnd-yStart;
+        const length: number = Math.sqrt(x*x + y*y);
+        if (!(length > 0) || !(num > 1))
+            return [];
+        if (!(config as any).valueRange) { // in this case we keep the tick positions fixed
+            const fracX: number = x / (num - 1);
+            const fracY: number = y / (num - 1);
+            const ticks: Array<Tick> = [];
+            for (let idx=0; idx < num; idx++) {
+                const tick: Tick = {
+                    x: xStart + idx * fracX,
+                    y: yStart + idx * fracY,
+                };
+                if ((config as any).values)
+                    tick.label = (config as any).values[idx];
+                ticks.push(tick);
+            }
+            return ticks;
+        }
+        throw new Error("Not implemented");
+
+    }
+
+    // mutating deep merge of defaultObj into obj
+    private static _merge<T extends Record<string, any>|Array<any>>(obj: Partial<T>|undefined, defaultObj: T): T {
+        if (!obj)
+            return AxesMgmt._merge(Array.isArray(defaultObj) ? [] as any : {}, defaultObj);
+        Object.keys(defaultObj).forEach((key: string)  => { 
+            const value: any = (obj as any)[key];
+            const defaultValue: any = (defaultObj as any)[key];
+            if (value === undefined || value === null || (value === true && typeof defaultValue === "object")) {
+                if (defaultValue !== null && typeof defaultValue === "object")
+                    (obj as any)[key] = AxesMgmt._merge(Array.isArray(defaultValue) ? [] as any : {}, defaultValue);
+                else
+                    (obj as any)[key] = defaultValue;
+            }
+            else if (typeof value === "object")
+                AxesMgmt._merge(value, defaultValue);
+        });
+        return obj as T;
     }
 
 }
@@ -72,15 +153,6 @@ export interface ArrowConfig {
     angle: number;
     filled: boolean;
 }
-
-export enum LabelPosition {
-    TOP_CENTER = "top-center",
-    TOP_RIGHT = "top-right",
-    TOP_LEFT = "top-left",
-    BOTTOM_CENTER = "bottom-center",
-    BOTTOM_RIGHT = "bottom-right",
-    BOTTOM_LEFT = "bottom-left"
-};
 
 export interface LabelConfig {
     text: string;
@@ -99,9 +171,29 @@ export interface LineConfig {
     label: LabelConfig;
 }
 
+export interface TicksConfig {
+    length: number;
+    width: number;
+    /**
+     * Default: same as line(?)
+     */
+    color: string;
+    
+}
+
+// FIXME even for string values a zooming effect may be desirable!
+export type TicksValuesConfig = 
+    TicksConfig & 
+        ({ 
+            valueRange: [number, number];
+            numberTicks: number; 
+        } 
+    | 
+        { values: Array<string> });
+
 export interface SingleAxisConfig {
     offsetBoundary: number;
-    tickLength: number;
+    ticks: boolean|Partial<TicksValuesConfig>;
     lineConfig: Partial<LineConfig>;
 }
 
@@ -110,8 +202,17 @@ export interface AxesConfig {
     y: boolean|Partial<SingleAxisConfig>;
 }
 
+interface Tick {
+    x: number;
+    y: number;
+    //width: number; // same for all
+    //length: number;
+    label?: string; // TODO labelPosition
+}
+
 export class LineUtils {
 
+    // FIXME this is entirely wrong... we must not rely on absolute coords, instead always reference (0,0) as (x0,y0) and (deltaX, deltaY) as (x1,y1)
     private static _getLabelPosition(x0: number, y0: number, x1: number, y1: number, config: LabelConfig): [number, number] {
         const pos: LabelPosition = config.position || LabelPosition.BOTTOM_CENTER;
         const size: number = config.size || 10; // TODO
@@ -121,23 +222,23 @@ export class LineUtils {
         const isVertical: boolean = Math.abs(deltaY) > Math.abs(deltaX);
         switch (pos) {
         case LabelPosition.BOTTOM_CENTER:
-            return isVertical ? [Math.max(0, deltaX/2 - 2 * textWidth), deltaY / 2] :
+            return isVertical ? [deltaX/2 - 2 * textWidth, deltaY / 2] :
                 [deltaX/2 - textWidth / 2, deltaY/2 + 1.5 * size];
         case LabelPosition.BOTTOM_RIGHT:
-            return isVertical ? [Math.max(0, x0 - 2 * textWidth), y0 - 1.5 * size] : // TODO check
-                [x1 - textWidth, y1 + 1.5 * size];
+            return isVertical ? [- 2 * textWidth, - 1.5 * size] : // TODO check
+                [ - textWidth, deltaY + 1.5 * size];
         case LabelPosition.BOTTOM_LEFT:
-            return isVertical ? [Math.max(0, x1 - 2 * textWidth), y1 + 1.5 * size] : // TODO check
-                [x0, y0 + 1.5 * size];
+            return isVertical ? [deltaX - 2 * textWidth, deltaY + 1.5 * size] : // TODO check
+                [0, 1.5 * size];
         case LabelPosition.TOP_CENTER:
-            return isVertical ? [Math.max(0, deltaX/2 + 1.5*size), deltaY / 2] : // TODO check
+            return isVertical ? [deltaX/2 + 1.5*size, deltaY / 2] : // TODO check
                 [deltaX/2 - textWidth / 2, deltaY/2 - 1.5 * size];
         case LabelPosition.TOP_RIGHT:
-            return isVertical ? [x0 + 1.5 *size, y0 - 1.5 * size] :// TODO check
-                [x1 - textWidth, y1 - 1.5 * size];
+            return isVertical ? [1.5 *size, - 1.5 * size] :// TODO check
+                [deltaX - textWidth, deltaY - 1.5 * size];
         case LabelPosition.TOP_LEFT:
-            return isVertical ? [x1 + 1.5 *size, y1 + 1.5 * size] :// TODO check
-                [x0, y0 - 1.5 * size];
+            return isVertical ? [deltaX + 1.5 *size, deltaY + 1.5 * size] :// TODO check
+                [0,  - 1.5 * size];
         }
     }
 
@@ -149,9 +250,11 @@ export class LineUtils {
         const angle: number = Math.atan2(y, x);
         const length: number = Math.sqrt(x*x + y*y);
         ctx.rotate(angle);
+        ctx.strokeStyle = "black"; // TODO configurable
         ctx.beginPath();
         ctx.moveTo(0, 0);
         ctx.lineTo(length, 0);
+        ctx.stroke();
         const arrowStart = config?.arrows?.start;
         if (arrowStart) {
             const arrowX: number = arrowStart.length * Math.cos(arrowStart.angle);
@@ -180,13 +283,14 @@ export class LineUtils {
                 ctx.stroke();
             }
         }
-        if (config?.label?.text) {
+        if (config?.label?.text) {  
             ctx.beginPath();
             const position: [number, number] = LineUtils._getLabelPosition(x0, y0, x1, y1, config.label);
             const rotated: boolean = config.label.rotated;
             //ctx.translate(position[0], position[1]); // ?
             if (!rotated && angle !== 0)
                 ctx.rotate(-angle); // FIXME this is probably not correct... need to rotate around label position probably?
+            ctx.strokeStyle = "black";
             ctx.strokeText(config.label.text, position[0], position[1]); // ok?
         }
         ctx.restore();

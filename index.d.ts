@@ -152,3 +152,10 @@ export declare interface ZoomPan {
      */
     context: CanvasRenderingContext2D;
 }
+
+declare global {
+    interface HTMLElementTagNameMap {
+        "canvas2d-zoom": Canvas2dZoom;
+    }
+}
+
