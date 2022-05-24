@@ -1,7 +1,5 @@
 import { Canvas2dZoom, ZoomPan } from "./canvas2d-zoom.js";
 
-// TODO proper label positions
-// TODO ticks
 // TODO styles (lines, labels, axes, arrows, ...)
 // TODO generate types
 
@@ -26,6 +24,7 @@ class AxesMgmt {
             width: 2
         },
         lineConfig: {
+            // FIXME?
             arrows: {
                 end: {length: 15, angle: Math.PI/6, filled: false }
             }
@@ -34,13 +33,15 @@ class AxesMgmt {
 
     private static readonly _DEFAULT_LABEL_CONFIG_X: Partial<LabelConfig> = {
         position: LabelPosition.BOTTOM_CENTER,
-        lineOffsetFactor: 2.5
-    }
+        lineOffsetFactor: 3.5
+    };
 
     private static readonly _DEFAULT_LABEL_CONFIG_Y: Partial<LabelConfig> = {
         position: LabelPosition.TOP_CENTER,
-        lineOffsetFactor: 2.5
-    }
+        lineOffsetFactor: 3.5
+    };
+
+    private static readonly _LOG_10: number = Math.log(10);
 
     readonly #x: boolean;
     readonly #y: boolean;
@@ -59,8 +60,37 @@ class AxesMgmt {
                 delete result.lineConfig.arrows.end;
             return result;
         };
-        this.#xConfig = merge(_config?.x, AxesMgmt._DEFAULT_AXIS, true);
-        this.#yConfig = merge(_config?.y, AxesMgmt._DEFAULT_AXIS, false);
+        this.#xConfig = this.#x ? merge(_config?.x, AxesMgmt._DEFAULT_AXIS, true) : AxesMgmt._DEFAULT_AXIS;
+        this.#yConfig = this.#y ? merge(_config?.y, AxesMgmt._DEFAULT_AXIS, false) : AxesMgmt._DEFAULT_AXIS;
+        const setLabelAndTicksFonts = (config: boolean|Partial<SingleAxisConfig>, derivedSettings: SingleAxisConfig) => {
+            let labelFont: FontConfig|undefined = _config.font, ticksFont: FontConfig|undefined = _config.font;
+            let labelStyle: string|undefined = _config.style, axisStyle: string|undefined = _config.style, ticksStyle: string|undefined = _config.style;
+            if (typeof config === "object") {
+                labelFont = config.lineConfig?.label?.font || config.font || labelFont;
+                ticksFont = config.ticks?.font || config.font || ticksFont;
+                axisStyle = config.lineConfig?.style || config.style || axisStyle;
+                labelStyle = config.lineConfig?.label?.style || axisStyle;
+                ticksStyle = config.ticks?.style || config.style || ticksStyle;
+            }
+            if (axisStyle)
+                derivedSettings.lineConfig.style = axisStyle;
+            if (derivedSettings.lineConfig?.label) {
+                if (labelFont)
+                    derivedSettings.lineConfig.label.font = labelFont;
+                if (labelStyle)
+                    derivedSettings.lineConfig.label.style = labelStyle;
+            }
+            if (derivedSettings.ticks) {
+                if (ticksFont)
+                    derivedSettings.ticks.font = ticksFont;
+                if (ticksStyle)
+                    derivedSettings.ticks.style = ticksStyle;
+            }
+        };
+        if (this.#x)
+            setLabelAndTicksFonts(_config?.x, this.#xConfig);
+        if (this.#y)
+            setLabelAndTicksFonts(_config?.y, this.#yConfig);
     }
 
     draw(state: ZoomPan, width: number, height: number) {
@@ -86,6 +116,12 @@ class AxesMgmt {
                             text: tick.label,
                             position: LabelPosition.LEFT
                         };
+                        if (config.font)
+                            lineConfig.label.font = config.font;
+                        if (config.style) {
+                            lineConfig.label.style = config.style;
+                            lineConfig.style = config.style;
+                        }
                     }
                     // @ts-ignore
                     LineUtils._drawLine(ctx, tick.x, tick.y+ config.length, tick.x, tick.y, lineConfig);
@@ -108,6 +144,12 @@ class AxesMgmt {
                             text: tick.label,
                             position: LabelPosition.LEFT
                         };
+                        if (config.font)
+                            lineConfig.label.font = config.font;
+                        if (config.style) {
+                            lineConfig.label.style = config.style;
+                            lineConfig.style = config.style;
+                        }
                     }
                     // @ts-ignore
                     LineUtils._drawLine(ctx, tick.x-config.length, tick.y, tick.x, tick.y, lineConfig);
@@ -116,11 +158,10 @@ class AxesMgmt {
         }
     }
 
-    // TODO validate algo
     private static _getTicks(valueRange: [number, number], numTicks: number): [Array<number>, number] {
         const length: number = Math.abs(valueRange[1] - valueRange[0]);
         const l: number = length/(numTicks-1);
-        const tenBase: number = Math.round(Math.log(l) / Math.log(10)); // log with base 10 of l
+        const tenBase: number = Math.round(Math.log(l) / AxesMgmt._LOG_10); // log with base 10 of l
         let proposedDistance: number = Math.pow(10, tenBase);
         if (Math.floor(length / proposedDistance) < Math.max(numTicks - 2, 3))
             proposedDistance = proposedDistance / 2;
@@ -136,8 +177,8 @@ class AxesMgmt {
             ticks.push(start);
             start += proposedDistance;
         }
-        const requiredPrecision = Math.max(1, Math.round(Math.log(Math.abs(valueRange[1])) / Math.log(10) - tenBase));
-        return [ticks, requiredPrecision];
+        const decimals = proposedDistance >= 1 ? 0 : -Math.floor(Math.log(proposedDistance)/AxesMgmt._LOG_10);
+        return [ticks, decimals];
     }
 
     // coordinates: line ticks will be attached to
@@ -149,7 +190,7 @@ class AxesMgmt {
         const lengthSquared: number = x*x + y*y;
         if (!(lengthSquared > 0) || !(num > 1))
             return [];
-        if (!(config as any).valueRange) { // in this case we keep the tick positions fixed FIXME no move static positions as well?
+        if (!(config as any).valueRange) { // in this case we keep the tick positions fixed FIXME move static positions as well?
             const fracX: number = x / (num - 1);
             const fracY: number = y / (num - 1);
             const ticks: Array<Tick> = [];
@@ -174,13 +215,13 @@ class AxesMgmt {
             const getValue = (p: DOMPointInit) => (p.y * y + p.x * x) / lengthSquared * (valueRange[1] - valueRange[0]) + valueRange[0];
             valueRange = [getValue(delta(originalStart)), getValue(delta(originalEnd))];
         }
-        const [ticks, precision]: [Array<number>, number] = AxesMgmt._getTicks(valueRange, (config as any).numberTicks);
+        const [ticks, decimals]: [Array<number>, number] = AxesMgmt._getTicks(valueRange, (config as any).numberTicks);
         return ticks.map(tick0 => {
             const fraction: number = (tick0 - valueRange[0]) / (valueRange[1] - valueRange[0]);
             const tick: Tick = {
                 x: xStart + fraction * x,
                 y: yStart + fraction * y,
-                label: tick0.toPrecision(precision)
+                label: tick0.toFixed(decimals)
             };
             return tick;
         });
@@ -217,30 +258,38 @@ export interface ArrowConfig {
 
 export interface LabelConfig {
     text: string;
-    font?: string;
     size?: number; // TODO specify
     position?: LabelPosition;
     lineOffsetFactor?: number;
     rotated?: boolean; // default: false
+    font?: FontConfig;
+    /**
+     * See strokeStyle: https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/strokeStyle
+     */
+    style?: string;
 }
 
-// TODO style etc
 export interface LineConfig {
     arrows: {
         start?: ArrowConfig;
         end?: ArrowConfig
-    }
+    };
     label: LabelConfig;
+    /**
+     * See strokeStyle: https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/strokeStyle
+     */
+    style: string;
 }
 
+// TODO opacity?
 export interface TicksConfig {
     length: number;
     width: number;
     /**
-     * Default: same as line(?)
+     * See strokeStyle: https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/strokeStyle
      */
-    color: string;
-    
+    style?: string;
+    font?: FontConfig;
 }
 
 // FIXME even for string values a zooming effect may be desirable!
@@ -253,15 +302,40 @@ export type TicksValuesConfig =
     | 
         { values: Array<string> });
 
+
+
+/**
+ * See https://developer.mozilla.org/en-US/docs/Web/CSS/font
+ */
+export interface FontConfigDetails {
+    size: string;
+    family: string;
+    style?: string;
+    weight?: string;
+    stretch?: string;
+}
+
+export type FontConfig = FontConfigDetails | string;
+
 export interface SingleAxisConfig {
     offsetBoundary: number;
-    ticks: boolean|Partial<TicksValuesConfig>;
+    ticks: Partial<TicksValuesConfig>;
     lineConfig: Partial<LineConfig>;
+    font?: FontConfig;
+    /**
+     * See strokeStyle: https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/strokeStyle
+     */
+    style?: string;
 }
 
 export interface AxesConfig {
     x: boolean|Partial<SingleAxisConfig>;
     y: boolean|Partial<SingleAxisConfig>;
+    font?: FontConfig;
+    /**
+     * See strokeStyle: https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/strokeStyle
+     */
+    style?: string;
 }
 
 interface Tick {
@@ -276,7 +350,7 @@ export class LineUtils {
 
     private static _getLabelPosition(length: number, angle: number, config: LabelConfig, ctx: CanvasRenderingContext2D): [number, number] {
         const pos: LabelPosition = config.position || LabelPosition.BOTTOM_CENTER;
-        const size: number = 1.5 * (config.size || 10) * (config.lineOffsetFactor || 1);
+        const size: number = 1.2 * (config.size || 10) * (config.lineOffsetFactor || 1);
         const textWidth: number = ctx.measureText(config.text).width;
         switch (pos) {
         case LabelPosition.BOTTOM_CENTER:
@@ -292,7 +366,7 @@ export class LineUtils {
         case LabelPosition.TOP_LEFT:
             return [size,  -size + textWidth * Math.sin(angle)];
         case LabelPosition.LEFT:
-            return [-size - textWidth * Math.cos(angle) , textWidth/2 * Math.sin(angle)];
+            return [-size / 2 * (1 - Math.sin(angle)) - textWidth * Math.cos(angle) , textWidth/2 * Math.sin(angle) + size/4 * Math.cos(angle) ];
         case LabelPosition.RIGHT:
             return [length + size, textWidth/2 * Math.sin(angle)];
         }
@@ -306,7 +380,7 @@ export class LineUtils {
         const angle: number = Math.atan2(y, x);
         const length: number = Math.sqrt(x*x + y*y);
         ctx.rotate(angle);
-        ctx.strokeStyle = "black"; // TODO configurable
+        ctx.strokeStyle = config?.style || "black";
         ctx.beginPath();
         ctx.moveTo(0, 0);
         ctx.lineTo(length, 0);
@@ -343,12 +417,11 @@ export class LineUtils {
             ctx.beginPath();
             const position: [number, number] = LineUtils._getLabelPosition(length, angle, config.label, ctx);
             const rotated: boolean = config.label.rotated;
-            ctx.translate(position[0], position[1]); // ?
-            
+            ctx.translate(position[0], position[1]);
             if (!rotated && angle !== 0)
-                ctx.rotate(-angle); // FIXME this is probably not correct... need to rotate around label position probably?
-            ctx.strokeStyle = "black";
-            ctx.strokeText(config.label.text, 0, 0); // ok?
+                ctx.rotate(-angle);
+            ctx.strokeStyle = config.label.style || "black";
+            ctx.strokeText(config.label.text, 0, 0);
         }
         ctx.restore();
     }

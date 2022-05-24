@@ -98,12 +98,13 @@
       import { LineUtils } from /* "https://unpkg.com/canvas2d-zoom@latest/dist/LineUtils.js" */ "./lineUtils.js";
       LineUtils.drawAxes(document.querySelector("canvas2d-zoom"), {
         x: { 
-          lineConfig: { label: { text: "x" }},
-          ticks: { values: ["a", "b", "c", "d"] }
+          lineConfig: { label: { text: "x", style: "blue" }, style: "green"},
+          ticks: { values: ["a", "b", "c", "d"], style: "orange" }
         }, 
         y: { 
           lineConfig: { label: { text: "y" }},
-          ticks: { valueRange: [0, 1] }
+          ticks: { valueRange: [0, 1], font: { size: "2em" } },
+          style: "darkblue"
         }
       });
     </script>
