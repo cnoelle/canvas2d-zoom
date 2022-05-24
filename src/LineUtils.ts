@@ -348,6 +348,9 @@ interface Tick {
 
 export class LineUtils {
 
+    // FontConfig properties
+    private static readonly _FONT_PROPERTIES: Array<keyof FontConfigDetails> = ["style", "weight", "stretch", "size", "family"]
+
     private static _getLabelPosition(length: number, angle: number, config: LabelConfig, ctx: CanvasRenderingContext2D): [number, number] {
         const pos: LabelPosition = config.position || LabelPosition.BOTTOM_CENTER;
         const size: number = 1.2 * (config.size || 10) * (config.lineOffsetFactor || 1);
@@ -370,6 +373,24 @@ export class LineUtils {
         case LabelPosition.RIGHT:
             return [length + size, textWidth/2 * Math.sin(angle)];
         }
+    }
+
+    private static _toFontString(font: FontConfig): string {
+        if (!font || typeof font === "string")
+            return font as string;
+        let result: string = "";
+        let fresh: boolean = true;
+        for (const key of LineUtils._FONT_PROPERTIES) {
+            let value: string = font[key];
+            if (value) {
+                if (!fresh)
+                    result += " ";
+                else
+                    fresh = false;
+                result += value;
+            }
+        }
+        return result;
     }
 
     private static _drawLine(ctx: CanvasRenderingContext2D, x0: number, y0: number, x1: number, y1: number, config?: Partial<LineConfig>) {
@@ -415,13 +436,15 @@ export class LineUtils {
         }
         if (config?.label?.text) {  
             ctx.beginPath();
+            ctx.fillStyle = config.label.style || "black";
+            if (config.label.font)
+                ctx.font = LineUtils._toFontString(config.label.font);
             const position: [number, number] = LineUtils._getLabelPosition(length, angle, config.label, ctx);
             const rotated: boolean = config.label.rotated;
             ctx.translate(position[0], position[1]);
             if (!rotated && angle !== 0)
                 ctx.rotate(-angle);
-            ctx.strokeStyle = config.label.style || "black";
-            ctx.strokeText(config.label.text, 0, 0);
+            ctx.fillText(config.label.text, 0, 0);
         }
         ctx.restore();
     }

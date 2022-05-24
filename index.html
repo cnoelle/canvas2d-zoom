@@ -99,11 +99,12 @@
       LineUtils.drawAxes(document.querySelector("canvas2d-zoom"), {
         x: { 
           lineConfig: { label: { text: "x", style: "blue" }, style: "green"},
-          ticks: { values: ["a", "b", "c", "d"], style: "orange" }
+          ticks: { values: ["a", "b", "c", "d"], style: "orange" },
+          font: { size: "12px", family: "sans-serif" }
         }, 
         y: { 
-          lineConfig: { label: { text: "y" }},
-          ticks: { valueRange: [0, 1], font: { size: "2em" } },
+          lineConfig: { label: { text: "y", font: { size: "0.9em", family: "sans-serif" } }},
+          ticks: { valueRange: [0, 1], font: { size: "1em", family: "sans-serif" } },
           style: "darkblue"
         }
       });
