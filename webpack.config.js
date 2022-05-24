@@ -4,7 +4,10 @@ import pkg from "resolve-typescript-plugin"; // required for importing .ts files
 const ResolveTypeScriptPlugin = pkg.default;
 
 export default {
-  entry: "./src/canvas2d-zoom.ts",
+  entry: {
+    bundle: "./src/canvas2d-zoom.ts",
+    lineUtils: "./src/LineUtils.ts"
+  },
   devtool: "inline-source-map",
   module: {
     rules: [
@@ -23,7 +26,7 @@ export default {
     plugins: [new ResolveTypeScriptPlugin()]
   },
   output: {
-    filename: "bundle.js",
+    filename: "[name].js",
     path: path.resolve("./dist"),
     library: {
       type: "module"

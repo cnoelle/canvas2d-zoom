@@ -78,8 +78,7 @@ class AxesMgmt {
             // @ts-ignore
             if (c.ticks && (c.ticks.values || c.ticks.valueRange)) {
                 const config: TicksConfig = c.ticks as TicksConfig;
-                const ticks: Array<Tick> = AxesMgmt._getTickPositions(0, height - yOffset, width, height - yOffset, config, xOffset, 
-                        -state.newTransformation.e / width, state.newTransformation.a); // FIXME width - offsetX? // FIXME -?
+                const ticks: Array<Tick> = AxesMgmt._getTickPositions(xOffset, height - yOffset, width - xOffset, height - yOffset, config, state.newTransformation);
                 for (const tick of ticks) {
                     const lineConfig: Partial<LineConfig> = {};
                     if (tick.label) {
@@ -89,7 +88,7 @@ class AxesMgmt {
                         };
                     }
                     // @ts-ignore
-                    LineUtils._drawLine(ctx, tick.x, tick.y+ config.length, tick.x, tick.y, lineConfig); // FIXME take into account rotation!
+                    LineUtils._drawLine(ctx, tick.x, tick.y+ config.length, tick.x, tick.y, lineConfig);
                 }
             }
         }
@@ -101,8 +100,7 @@ class AxesMgmt {
             // @ts-ignore
             if (c.ticks && (c.ticks.values || c.ticks.valueRange)) {
                 const config: TicksConfig = c.ticks as TicksConfig;
-                const ticks: Array<Tick> = AxesMgmt._getTickPositions(0, xOffset, height, xOffset, config, yOffset, 
-                        -state.newTransformation.f / height, state.newTransformation.d); // FIXME hieght - offsetY? // FIXME -?
+                const ticks: Array<Tick> = AxesMgmt._getTickPositions(xOffset, height - yOffset, xOffset, yOffset, config, state.newTransformation);
                 for (const tick of ticks) {
                     const lineConfig: Partial<LineConfig> = {};
                     if (tick.label) {
@@ -112,7 +110,7 @@ class AxesMgmt {
                         };
                     }
                     // @ts-ignore
-                    LineUtils._drawLine(ctx, tick.y - config.length, tick.x, tick.y, tick.x, lineConfig); // FIXME take into account rotation!
+                    LineUtils._drawLine(ctx, tick.x-config.length, tick.y, tick.x, tick.y, lineConfig);
                 }
             }
         }
@@ -142,21 +140,14 @@ class AxesMgmt {
         return [ticks, requiredPrecision];
     }
 
-    private static _getTickPositions(x0: number, y0: number, x1: number, y1: number, config: TicksConfig, offset: number, 
-                pan: number, zoom: number): Array<Tick> {
+    // coordinates: line ticks will be attached to
+    private static _getTickPositions(xStart: number, yStart: number, xEnd: number, yEnd: number, config: TicksConfig, currentTransform: DOMMatrixReadOnly): Array<Tick> {
         // @ts-ignore
         const num: number = Math.round(config.values?.length || config.numberTicks);
-        const angle: number = Math.atan2(y0-y1, x1-x0);
-        const cos = Math.cos(angle) * offset;
-        const sin = Math.sin(angle) * offset;
-        const xStart: number = x0 + cos;
-        const xEnd: number = x1 - cos;
-        const yStart: number = y0 - sin;
-        const yEnd: number = y1 + sin;
         const x: number = xEnd-xStart;
         const y: number = yEnd-yStart;
-        const length: number = Math.sqrt(x*x + y*y);
-        if (!(length > 0) || !(num > 1))
+        const lengthSquared: number = x*x + y*y;
+        if (!(lengthSquared > 0) || !(num > 1))
             return [];
         if (!(config as any).valueRange) { // in this case we keep the tick positions fixed FIXME no move static positions as well?
             const fracX: number = x / (num - 1);
@@ -174,8 +165,15 @@ class AxesMgmt {
             return ticks;
         }
         let valueRange: [number, number] = (config as any).valueRange;
-        if (pan !== 0 || zoom !== 1)
-            valueRange = valueRange.map(value => zoom * value + pan) as [number, number];
+        if (!currentTransform.isIdentity) {
+            const inverse: DOMMatrixReadOnly = currentTransform.inverse();
+            const originalStart: DOMPoint = inverse.transformPoint({x: xStart, y: yStart});
+            const originalEnd: DOMPoint = inverse.transformPoint({x: xEnd, y: yEnd});
+            // project new point to axis vector and determine the distance from the the start
+            const delta = (p: DOMPoint): DOMPointInit => {return {x: p.x - xStart, y: p.y - yStart};};
+            const getValue = (p: DOMPointInit) => (p.y * y + p.x * x) / lengthSquared * (valueRange[1] - valueRange[0]) + valueRange[0];
+            valueRange = [getValue(delta(originalStart)), getValue(delta(originalEnd))];
+        }
         const [ticks, precision]: [Array<number>, number] = AxesMgmt._getTicks(valueRange, (config as any).numberTicks);
         return ticks.map(tick0 => {
             const fraction: number = (tick0 - valueRange[0]) / (valueRange[1] - valueRange[0]);
