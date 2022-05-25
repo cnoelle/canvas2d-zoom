@@ -1,6 +1,9 @@
 import { Canvas2dZoom, ZoomPan } from "./canvas2d-zoom.js";
 
-// TODO styles (lines, labels, axes, arrows, ...)
+/* TODO (excerpt)
+ *   - adapt ticks label font size to string length 
+ */
+
 // TODO generate types
 
 export enum LabelPosition {
@@ -41,6 +44,10 @@ class AxesMgmt {
         lineOffsetFactor: 3.5
     };
 
+    private static readonly _GRID_CONFIG: Partial<LineConfig> = {
+        style: "lightgrey" //?
+    };
+
     private static readonly _LOG_10: number = Math.log(10);
 
     readonly #x: boolean;
@@ -65,12 +72,14 @@ class AxesMgmt {
         const setLabelAndTicksFonts = (config: boolean|Partial<SingleAxisConfig>, derivedSettings: SingleAxisConfig) => {
             let labelFont: FontConfig|undefined = _config.font, ticksFont: FontConfig|undefined = _config.font;
             let labelStyle: string|undefined = _config.style, axisStyle: string|undefined = _config.style, ticksStyle: string|undefined = _config.style;
+            let grid: boolean = _config.grid || false;
             if (typeof config === "object") {
                 labelFont = config.lineConfig?.label?.font || config.font || labelFont;
                 ticksFont = config.ticks?.font || config.font || ticksFont;
                 axisStyle = config.lineConfig?.style || config.style || axisStyle;
                 labelStyle = config.lineConfig?.label?.style || axisStyle;
                 ticksStyle = config.ticks?.style || config.style || ticksStyle;
+                grid = config.ticks?.grid !== undefined ? config.ticks.grid : grid;
             }
             if (axisStyle)
                 derivedSettings.lineConfig.style = axisStyle;
@@ -85,6 +94,8 @@ class AxesMgmt {
                     derivedSettings.ticks.font = ticksFont;
                 if (ticksStyle)
                     derivedSettings.ticks.style = ticksStyle;
+                if (grid)
+                    derivedSettings.ticks.grid = grid;
             }
         };
         if (this.#x)
@@ -124,7 +135,11 @@ class AxesMgmt {
                         }
                     }
                     // @ts-ignore
-                    LineUtils._drawLine(ctx, tick.x, tick.y+ config.length, tick.x, tick.y, lineConfig);
+                    LineUtils._drawLine(ctx, tick.x, tick.y + config.length, tick.x, tick.y, lineConfig);
+                    if (config.grid) {
+                        // @ts-ignore
+                        LineUtils._drawLine(ctx, tick.x, tick.y, tick.x, 0, AxesMgmt._GRID_CONFIG);
+                    }
                 }
             }
         }
@@ -153,6 +168,10 @@ class AxesMgmt {
                     }
                     // @ts-ignore
                     LineUtils._drawLine(ctx, tick.x-config.length, tick.y, tick.x, tick.y, lineConfig);
+                    if (config.grid) {
+                        // @ts-ignore
+                        LineUtils._drawLine(ctx, tick.x, tick.y, width, tick.y, AxesMgmt._GRID_CONFIG);
+                    }
                 }
             }
         }
@@ -269,6 +288,7 @@ export interface LabelConfig {
     style?: string;
 }
 
+// TODO stroke width?
 export interface LineConfig {
     arrows: {
         start?: ArrowConfig;
@@ -290,6 +310,8 @@ export interface TicksConfig {
      */
     style?: string;
     font?: FontConfig;
+    // TODO option to define grid style
+    grid?: boolean;
 }
 
 // FIXME even for string values a zooming effect may be desirable!
@@ -336,6 +358,7 @@ export interface AxesConfig {
      * See strokeStyle: https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/strokeStyle
      */
     style?: string;
+    grid?: boolean;
 }
 
 interface Tick {
@@ -464,7 +487,7 @@ export class LineUtils {
     }
 
     /**
-     * Add one or two coordinate axes to the canvas, consisting of static lines with arrow heads and labels, plus
+     * Add one or two coordinate axes to the canvas, consisting of static lines with optional arrow heads and labels, plus
      * ticks that adapt to the zoom and pan state.
      * @param canvas 
      * @param config 
