@@ -128,7 +128,12 @@ export declare class Canvas2dZoom extends HTMLElement {
      * The listener will be called once with the current state and then on every state change.
      * @param listener 
      */
-    drawCustom(listener: (stateChange: ZoomPan, width: number, height: number) => void): void
+    drawCustom(listener: (stateChange: ZoomPan, width: number, height: number) => void): void;
+    /**
+     * Remove a zoom listener
+     * @param listener 
+     */
+    stopDrawCustom(listener: (stateChange: ZoomPan, width: number, height: number) => void): void;
 }
 
 /**

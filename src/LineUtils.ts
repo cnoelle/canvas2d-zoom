@@ -30,9 +30,8 @@ class AxesMgmt {
             width: 2
         },
         lineConfig: {
-            // FIXME?
             arrows: {
-                end: {length: 15, angle: Math.PI/6, filled: false }
+                /*end: {length: 15, angle: Math.PI/6, filled: false } */
             }
         }
     };
@@ -109,6 +108,7 @@ class AxesMgmt {
 
     draw(state: ZoomPan, width: number, height: number) {
         const ctx: CanvasRenderingContext2D = state.context;
+        // FIXME use ctx.translate for xOffset, yOffset? Optional? => if drawn before other stuff this could even be helpful for positioning other elements
         let xOffset: number = this.#yConfig.offsetBoundary;
         if (xOffset < 0)
             xOffset = Math.min(Math.round(width/10), 50);
@@ -122,7 +122,8 @@ class AxesMgmt {
             // @ts-ignore
             if (c.ticks && (c.ticks.values || c.ticks.valueRange)) {
                 const config: TicksConfig = c.ticks as TicksConfig;
-                const ticks: Array<Tick> = AxesMgmt._getTickPositions(xOffset, height - yOffset, width - xOffset, height - yOffset, config, state.newTransformation);
+                const tickEndX: number = c.lineConfig?.arrows?.end ? width - xOffset : width;
+                const ticks: Array<Tick> = AxesMgmt._getTickPositions(xOffset, height - yOffset, tickEndX, height - yOffset, config, state.newTransformation);
                 for (const tick of ticks) {
                     const lineConfig: Partial<LineConfig> = {};
                     if (tick.label) {
@@ -148,13 +149,13 @@ class AxesMgmt {
         }
         if (this.#y) {
             const c: SingleAxisConfig = this.#yConfig;
-
             // @ts-ignore
             LineUtils._drawLine(ctx, xOffset, c.offsetDrawn ? height : height - yOffset, xOffset, 0, c.lineConfig);
             // @ts-ignore
             if (c.ticks && (c.ticks.values || c.ticks.valueRange)) {
                 const config: TicksConfig = c.ticks as TicksConfig;
-                const ticks: Array<Tick> = AxesMgmt._getTickPositions(xOffset, height - yOffset, xOffset, yOffset, config, state.newTransformation);
+                const tickEndY: number = c.lineConfig?.arrows?.end ? yOffset : 0;
+                const ticks: Array<Tick> = AxesMgmt._getTickPositions(xOffset, height - yOffset, xOffset, tickEndY, config, state.newTransformation);
                 for (const tick of ticks) {
                     const lineConfig: Partial<LineConfig> = {};
                     if (tick.label) {
@@ -294,8 +295,8 @@ export interface LabelConfig {
 // TODO stroke width?
 export interface LineConfig {
     arrows: {
-        start?: ArrowConfig;
-        end?: ArrowConfig
+        start?: boolean|ArrowConfig;
+        end?: boolean|ArrowConfig
     };
     label: LabelConfig;
     /**
@@ -376,7 +377,8 @@ interface Tick {
 export class LineUtils {
 
     // FontConfig properties
-    private static readonly _FONT_PROPERTIES: Array<keyof FontConfigDetails> = ["style", "weight", "stretch", "size", "family"]
+    private static readonly _FONT_PROPERTIES: Array<keyof FontConfigDetails> = ["style", "weight", "stretch", "size", "family"];
+    private static readonly _DEFAULT_ARROW_CONFIG: ArrowConfig = {length: 15, angle: Math.PI/6, filled: false};
 
     private static _getLabelPosition(length: number, angle: number, config: LabelConfig, ctx: CanvasRenderingContext2D): [number, number] {
         const pos: LabelPosition = config.position || LabelPosition.BOTTOM_CENTER;
@@ -433,7 +435,7 @@ export class LineUtils {
         ctx.moveTo(0, 0);
         ctx.lineTo(length, 0);
         ctx.stroke();
-        const arrowStart = config?.arrows?.start;
+        const arrowStart: ArrowConfig|false = config?.arrows?.start === true ? LineUtils._DEFAULT_ARROW_CONFIG : config?.arrows?.start;
         if (arrowStart) {
             const arrowX: number = arrowStart.length * Math.cos(arrowStart.angle);
             const arrowY: number = arrowStart.length * Math.sin(arrowStart.angle);
@@ -447,7 +449,7 @@ export class LineUtils {
                 ctx.stroke();
             }
         }
-        const arrowEnd = config?.arrows?.end;
+        const arrowEnd: ArrowConfig|false = config?.arrows?.end === true ? LineUtils._DEFAULT_ARROW_CONFIG : config?.arrows?.end;
         if (arrowEnd) {
             const arrowX: number = arrowEnd.length * Math.cos(arrowEnd.angle);
             const arrowY: number = arrowEnd.length * Math.sin(arrowEnd.angle);
@@ -486,8 +488,10 @@ export class LineUtils {
      * @param arrowEnd 
      * @param arrowStart 
      */
-    public static drawLine(canvas: Canvas2dZoom, x0: number, y0: number, x1: number, y1: number, config?: Partial<LineConfig>) {
-        canvas.drawCustom((state: ZoomPan) => LineUtils._drawLine(state.context, x0, y0, x1, y1, config));
+    public static drawLine(canvas: Canvas2dZoom, x0: number, y0: number, x1: number, y1: number, config?: Partial<LineConfig>): { close: () => void } {
+        const listener = (state: ZoomPan) => LineUtils._drawLine(state.context, x0, y0, x1, y1, config);
+        canvas.drawCustom(listener);
+        return { close: () => canvas.stopDrawCustom(listener) };
     }
 
     /**
@@ -496,9 +500,11 @@ export class LineUtils {
      * @param canvas 
      * @param config 
      */
-    public static drawAxes(canvas: Canvas2dZoom, config?: Partial<AxesConfig>) {
-        const axes: AxesMgmt = new AxesMgmt(config || {}); 
-        canvas.drawCustom(axes.draw.bind(axes));
+    public static drawAxes(canvas: Canvas2dZoom, config?: Partial<AxesConfig>): { close: () => void } {
+        const axes: AxesMgmt = new AxesMgmt(config || {});
+        const listener = axes.draw.bind(axes);
+        canvas.drawCustom(listener);
+        return { close: () => canvas.stopDrawCustom(listener) };
     }
 
 }

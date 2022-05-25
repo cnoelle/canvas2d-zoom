@@ -98,7 +98,7 @@
       import { LineUtils } from /* "https://unpkg.com/canvas2d-zoom@latest/dist/LineUtils.js" */ "./lineUtils.js";
       LineUtils.drawAxes(document.querySelector("canvas2d-zoom"), {
         x: { 
-          lineConfig: { label: { text: "x", style: "blue" }, style: "green"},
+          lineConfig: { label: { text: "x", style: "blue" }, style: "green", arrows: {end: true}},
           ticks: { values: ["a", "b", "c", "d"], style: "orange" },
           font: { size: "12px", family: "sans-serif" }
         }, 

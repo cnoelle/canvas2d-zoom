@@ -96,12 +96,12 @@ export declare class LineUtils {
      * @param arrowEnd
      * @param arrowStart
      */
-    static drawLine(canvas: Canvas2dZoom, x0: number, y0: number, x1: number, y1: number, config?: Partial<LineConfig>): void;
+    static drawLine(canvas: Canvas2dZoom, x0: number, y0: number, x1: number, y1: number, config?: Partial<LineConfig>): { close: () => void };
     /**
      * Add one or two coordinate axes to the canvas, consisting of static lines with optional arrow heads and labels, plus
      * ticks that adapt to the zoom and pan state.
      * @param canvas
      * @param config
      */
-    static drawAxes(canvas: Canvas2dZoom, config?: Partial<AxesConfig>): void;
+    static drawAxes(canvas: Canvas2dZoom, config?: Partial<AxesConfig>): { close: () => void };
 }

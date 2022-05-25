@@ -51,6 +51,8 @@ export class Canvas2dZoom extends HTMLElement {
     readonly #mouseListener: MouseEventListener;
     readonly #mouseHandler: MouseEventHandler;
     readonly #keyEventListener: any;
+    // keys: passed listeners, values: internal listeners
+    readonly #zoomListeners: WeakMap<(stateChange: ZoomPan, width: number, height: number) => void, any> = new WeakMap();
  
     #zoom: boolean = true;
     #lastFocusPoint: Point|null = null;
@@ -461,6 +463,8 @@ export class Canvas2dZoom extends HTMLElement {
      * @param listener 
      */
     drawCustom(listener: (stateChange: ZoomPan, width: number, height: number) => void): void {
+        if (this.#zoomListeners.has(listener))
+            return;
         const ctx: CanvasRenderingContext2D = this.#canvas.getContext("2d");
         listener({
             context: ctx,
@@ -469,8 +473,20 @@ export class Canvas2dZoom extends HTMLElement {
             zoom: false,
             pan: false
         }, this.#canvas.width, this.#canvas.height);
-        this.addEventListener("zoom", (event: CustomEvent<ZoomPan>) => listener(event.detail, 
-                (event.currentTarget as Canvas2dZoom).#canvas.width, (event.currentTarget as Canvas2dZoom).#canvas.height));
+        const internalListener = (event: CustomEvent<ZoomPan>) => listener(event.detail, 
+            (event.currentTarget as Canvas2dZoom).#canvas.width, (event.currentTarget as Canvas2dZoom).#canvas.height);
+        this.#zoomListeners.set(listener, internalListener);
+        this.addEventListener("zoom", internalListener);
+    }
+
+    /**
+     * Remove a zoom listener
+     * @param listener 
+     */
+    stopDrawCustom(listener: (stateChange: ZoomPan, width: number, height: number) => void): void {
+        const internalListener = this.#zoomListeners.get(listener);
+        if (internalListener)
+            this.removeEventListener("zoom", internalListener);
     }
 
 }
