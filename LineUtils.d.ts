@@ -74,6 +74,7 @@ export interface SingleAxisConfig {
      * See strokeStyle: https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/strokeStyle
      */
     style?: string;
+    keepOffsetContent?: boolean;
 }
 export interface AxesConfig {
     x: boolean | Partial<SingleAxisConfig>;
@@ -84,6 +85,10 @@ export interface AxesConfig {
      */
     style?: string;
     grid?: boolean;
+    /**
+     * Default: false
+     */
+    keepOffsetContent?: boolean;
 }
 export declare class LineUtils {
     /**

@@ -5,9 +5,6 @@ import { Canvas2dZoom, ZoomPan } from "./canvas2d-zoom.js";
         ~~ alternatively, respect original order => likely more difficult to implement
  *   - adapt ticks label font size to string length; maybe even rotate y-label if it becomes too long
  */
-
-// TODO generate types
-
 export enum LabelPosition {
     TOP_CENTER = "top-center",
     TOP_RIGHT = "top-right",
@@ -75,6 +72,7 @@ class AxesMgmt {
             let labelFont: FontConfig|undefined = _config.font, ticksFont: FontConfig|undefined = _config.font;
             let labelStyle: string|undefined = _config.style, axisStyle: string|undefined = _config.style, ticksStyle: string|undefined = _config.style;
             let grid: boolean = _config.grid || false;
+            let keepOffset: boolean|undefined = _config.keepOffsetContent;
             if (typeof config === "object") {
                 labelFont = config.lineConfig?.label?.font || config.font || labelFont;
                 ticksFont = config.ticks?.font || config.font || ticksFont;
@@ -82,6 +80,7 @@ class AxesMgmt {
                 labelStyle = config.lineConfig?.label?.style || axisStyle;
                 ticksStyle = config.ticks?.style || config.style || ticksStyle;
                 grid = config.ticks?.grid !== undefined ? config.ticks.grid : grid;
+                keepOffset = config.keepOffsetContent !== undefined ? config.keepOffsetContent : keepOffset;
             }
             if (axisStyle)
                 derivedSettings.lineConfig.style = axisStyle;
@@ -99,6 +98,8 @@ class AxesMgmt {
                 if (grid)
                     derivedSettings.ticks.grid = grid;
             }
+            if (keepOffset !== undefined)
+                derivedSettings.keepOffsetContent = keepOffset;
         };
         if (this.#x)
             setLabelAndTicksFonts(_config?.x, this.#xConfig);
@@ -117,6 +118,11 @@ class AxesMgmt {
             yOffset = Math.min(Math.round(height/10), 50);
         if (this.#x) {
             const c: SingleAxisConfig = this.#xConfig;
+            if (!c.keepOffsetContent) {
+                // draw a white rectangle
+                ctx.fillStyle = "white";
+                ctx.fillRect(0, height-yOffset, width, height);
+            }
             // @ts-ignore
             LineUtils._drawLine(ctx, c.offsetDrawn ? 0 : xOffset, height - yOffset, width, height - yOffset, c.lineConfig);
             // @ts-ignore
@@ -149,6 +155,11 @@ class AxesMgmt {
         }
         if (this.#y) {
             const c: SingleAxisConfig = this.#yConfig;
+            if (!c.keepOffsetContent) {
+                // draw a white rectangle
+                ctx.fillStyle = "white";
+                ctx.fillRect(0, 0, xOffset, height);
+            }
             // @ts-ignore
             LineUtils._drawLine(ctx, xOffset, c.offsetDrawn ? height : height - yOffset, xOffset, 0, c.lineConfig);
             // @ts-ignore
@@ -353,6 +364,7 @@ export interface SingleAxisConfig {
      * See strokeStyle: https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/strokeStyle
      */
     style?: string;
+    keepOffsetContent?: boolean;
 }
 
 export interface AxesConfig {
@@ -364,6 +376,10 @@ export interface AxesConfig {
      */
     style?: string;
     grid?: boolean;
+    /**
+     * Default: false
+     */
+    keepOffsetContent?: boolean;
 }
 
 interface Tick {

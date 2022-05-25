@@ -11,91 +11,84 @@
       <canvas2d-zoom width="640" height="480" min-zoom="0.25" max-zoom="8" double-click-mode="reset" circle-min-radius="3"></canvas2d-zoom>
       <div><input type="button" value="Reset" id="reset"></div>
     </div>
-    <script>
-
-      document.addEventListener("DOMContentLoaded", () => {
-        const canvas = document.querySelector("canvas2d-zoom");
-        // FIXME
-        //canvas.addEventListener("zoom", ev => console.log("ev", ev));
-
-        document.querySelector("#reset").addEventListener("click", _ => canvas.resetZoomPan());
-        const ctx = canvas.getContext("2d");
-
-        // draw figure
-        ctx.strokeStyle = "green";
-        ctx.beginPath();
-        ctx.arc(200, 100, 15, 0, 2 * Math.PI);
-        ctx.stroke();
-        ctx.strokeStyle = "blue";
-        ctx.beginPath();
-        ctx.moveTo(200, 115);
-        ctx.lineTo(200, 200);
-        ctx.stroke();
-        
-        ctx.strokeStyle = "red";
-        ctx.beginPath();
-        ctx.moveTo(200, 200);
-        ctx.lineTo(165, 250);
-        ctx.moveTo(200, 200);
-        ctx.lineTo(235, 250);
-        ctx.moveTo(200, 115);
-        ctx.lineTo(165, 170);
-        ctx.moveTo(200, 115);
-        ctx.lineTo(235, 170);
-        ctx.stroke();
-        
-        ctx.strokeStyle = "blue";
-        ctx.fillStyle = "orange";
-        ctx.beginPath();
-        ctx.arc(320, 0, 15, 0, 2 * Math.PI);
-        ctx.fill();
-        
-        ctx.rotate(Math.PI/2);
-        ctx.beginPath();
-        ctx.arc(320, 0, 15, 0, 2 * Math.PI);
-        ctx.fill();
-
-        ctx.rotate(-Math.PI/2);
-        ctx.translate(320, 240);
-        ctx.rotate(Math.PI/2);
-        ctx.translate(-320, -240);
-        ctx.beginPath();
-        ctx.arc(320, 0, 15, 0, 2 * Math.PI);
-        ctx.fill();
-
-        ctx.fillStyle = "darkblue";
-        ctx.setTransform(2, 0, 0, 1, 200, 400);
-        ctx.beginPath();
-        ctx.arc(0, 0, 15, 0, 2 * Math.PI);
-        ctx.fill();
-
-        ctx.fillStyle = "lightblue";
-        ctx.resetTransform();
-        ctx.beginPath();
-        ctx.arc(20, 20, 15, 0, 2 * Math.PI);
-        ctx.fill();
-
-        // a small circle; when we zoom out this will hit the circle-min-radius limit and will
-        // not shrink any further
-        ctx.fillStyle = "darkred";
-        ctx.resetTransform();
-        ctx.beginPath();
-        ctx.arc(400, 200, 3, 0, 2 * Math.PI);
-        ctx.fill();
-      });
-    </script>
     <script type="module">
       // Here we use the latest published version from npmjs via unpkg"
       // For local development replace the url by "./bundle.js" and run `npm run start`. 
       // This will start a webpack dev server that generates the file bundle.js from src/canvas2d-zoom.ts
       import { Canvas2dZoom } from /* "https://unpkg.com/canvas2d-zoom@latest/dist/canvas2d-zoom.js" */ "./bundle.js";
-      Canvas2dZoom.register();
-    </script>
-    <script type="module">
       // Here we use the latest published version from npmjs via unpkg"
       // For local development replace the url by "./lineUtils.js" and run `npm run start` 
       // This will start a webpack dev server that generates the file lineUtils.js from src/LineUtils.ts
       import { LineUtils } from /* "https://unpkg.com/canvas2d-zoom@latest/dist/LineUtils.js" */ "./lineUtils.js";
+      Canvas2dZoom.register();
+      const canvas = document.querySelector("canvas2d-zoom");
+      // canvas.addEventListener("zoom", ev => console.log("ev", ev));
+
+      document.querySelector("#reset").addEventListener("click", _ => canvas.resetZoomPan());
+      const ctx = canvas.getContext("2d");
+
+      // draw figure
+      ctx.strokeStyle = "green";
+      ctx.beginPath();
+      ctx.arc(200, 100, 15, 0, 2 * Math.PI);
+      ctx.stroke();
+      ctx.strokeStyle = "blue";
+      ctx.beginPath();
+      ctx.moveTo(200, 115);
+      ctx.lineTo(200, 200);
+      ctx.stroke();
+      
+      ctx.strokeStyle = "red";
+      ctx.beginPath();
+      ctx.moveTo(200, 200);
+      ctx.lineTo(165, 250);
+      ctx.moveTo(200, 200);
+      ctx.lineTo(235, 250);
+      ctx.moveTo(200, 115);
+      ctx.lineTo(165, 170);
+      ctx.moveTo(200, 115);
+      ctx.lineTo(235, 170);
+      ctx.stroke();
+      
+      ctx.strokeStyle = "blue";
+      ctx.fillStyle = "orange";
+      ctx.beginPath();
+      ctx.arc(320, 0, 15, 0, 2 * Math.PI);
+      ctx.fill();
+      
+      ctx.rotate(Math.PI/2);
+      ctx.beginPath();
+      ctx.arc(320, 0, 15, 0, 2 * Math.PI);
+      ctx.fill();
+
+      ctx.rotate(-Math.PI/2);
+      ctx.translate(320, 240);
+      ctx.rotate(Math.PI/2);
+      ctx.translate(-320, -240);
+      ctx.beginPath();
+      ctx.arc(320, 0, 15, 0, 2 * Math.PI);
+      ctx.fill();
+
+      ctx.fillStyle = "darkblue";
+      ctx.setTransform(2, 0, 0, 1, 200, 400);
+      ctx.beginPath();
+      ctx.arc(0, 0, 15, 0, 2 * Math.PI);
+      ctx.fill();
+
+      ctx.fillStyle = "lightblue";
+      ctx.resetTransform();
+      ctx.beginPath();
+      ctx.arc(20, 20, 15, 0, 2 * Math.PI);
+      ctx.fill();
+
+      // a small circle; when we zoom out this will hit the circle-min-radius limit and will
+      // not shrink any further
+      ctx.fillStyle = "darkred";
+      ctx.resetTransform();
+      ctx.beginPath();
+      ctx.arc(400, 200, 3, 0, 2 * Math.PI);
+      ctx.fill();
+
       LineUtils.drawAxes(document.querySelector("canvas2d-zoom"), {
         x: { 
           lineConfig: { label: { text: "x", style: "blue" }, style: "green", arrows: {end: true}},
