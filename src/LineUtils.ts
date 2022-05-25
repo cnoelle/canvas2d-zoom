@@ -1,7 +1,9 @@
 import { Canvas2dZoom, ZoomPan } from "./canvas2d-zoom.js";
 
 /* TODO (excerpt)
- *   - adapt ticks label font size to string length 
+ *   - option to define whether to draw axes at the beginning (before other actions) or at the end
+        ~~ alternatively, respect original order => likely more difficult to implement
+ *   - adapt ticks label font size to string length; maybe even rotate y-label if it becomes too long
  */
 
 // TODO generate types
@@ -21,6 +23,7 @@ class AxesMgmt {
 
     private static readonly _DEFAULT_AXIS: SingleAxisConfig = {
         offsetBoundary: -1,
+        offsetDrawn: false,
         ticks: {
             length: 8,
             numberTicks: 6,
@@ -115,7 +118,7 @@ class AxesMgmt {
         if (this.#x) {
             const c: SingleAxisConfig = this.#xConfig;
             // @ts-ignore
-            LineUtils._drawLine(ctx, 0, height - yOffset, width, height - yOffset, c.lineConfig);
+            LineUtils._drawLine(ctx, c.offsetDrawn ? 0 : xOffset, height - yOffset, width, height - yOffset, c.lineConfig);
             // @ts-ignore
             if (c.ticks && (c.ticks.values || c.ticks.valueRange)) {
                 const config: TicksConfig = c.ticks as TicksConfig;
@@ -147,7 +150,7 @@ class AxesMgmt {
             const c: SingleAxisConfig = this.#yConfig;
 
             // @ts-ignore
-            LineUtils._drawLine(ctx, xOffset, height, xOffset, 0, c.lineConfig);
+            LineUtils._drawLine(ctx, xOffset, c.offsetDrawn ? height : height - yOffset, xOffset, 0, c.lineConfig);
             // @ts-ignore
             if (c.ticks && (c.ticks.values || c.ticks.valueRange)) {
                 const config: TicksConfig = c.ticks as TicksConfig;
@@ -341,6 +344,7 @@ export type FontConfig = FontConfigDetails | string;
 
 export interface SingleAxisConfig {
     offsetBoundary: number;
+    offsetDrawn: boolean;
     ticks: Partial<TicksValuesConfig>;
     lineConfig: Partial<LineConfig>;
     font?: FontConfig;
