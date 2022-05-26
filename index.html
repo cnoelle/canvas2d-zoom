@@ -15,11 +15,11 @@
       // Here we use the latest published version from npmjs via unpkg"
       // For local development replace the url by "./bundle.js" and run `npm run start`. 
       // This will start a webpack dev server that generates the file bundle.js from src/canvas2d-zoom.ts
-      import { Canvas2dZoom } from /* "https://unpkg.com/canvas2d-zoom@latest/dist/canvas2d-zoom.js" */ "./bundle.js";
+      import { Canvas2dZoom } from "https://unpkg.com/canvas2d-zoom@latest/dist/canvas2d-zoom.js" /*"./bundle.js"*/;
       // Here we use the latest published version from npmjs via unpkg"
       // For local development replace the url by "./lineUtils.js" and run `npm run start` 
       // This will start a webpack dev server that generates the file lineUtils.js from src/LineUtils.ts
-      import { LineUtils } from /* "https://unpkg.com/canvas2d-zoom@latest/dist/LineUtils.js" */ "./lineUtils.js";
+      import { LineUtils } from "https://unpkg.com/canvas2d-zoom@latest/dist/LineUtils.js" /* "./lineUtils.js"*/;
       Canvas2dZoom.register();
       const canvas = document.querySelector("canvas2d-zoom");
       // canvas.addEventListener("zoom", ev => console.log("ev", ev));
