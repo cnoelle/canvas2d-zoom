@@ -193,6 +193,9 @@ class AxesMgmt {
     }
 
     private static _getTicks(valueRange: [number, number], numTicks: number): [Array<number>, number] {
+        const reverse: boolean = valueRange[0] > valueRange[1];
+        if (reverse)
+            valueRange = [valueRange[1], valueRange[0]];
         const length: number = Math.abs(valueRange[1] - valueRange[0]);
         const l: number = length/(numTicks-1);
         const tenBase: number = Math.round(Math.log(l) / AxesMgmt._LOG_10); // log with base 10 of l
@@ -212,6 +215,8 @@ class AxesMgmt {
             start += proposedDistance;
         }
         const decimals = proposedDistance >= 1 ? 0 : -Math.floor(Math.log(proposedDistance)/AxesMgmt._LOG_10);
+        if (reverse)
+            ticks.reverse();
         return [ticks, decimals];
     }
 
