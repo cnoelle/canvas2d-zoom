@@ -110,6 +110,10 @@ export declare class Canvas2dZoom extends HTMLElement {
      */
     resetZoomPan(): void;
     /**
+     * Delete all content written previously
+     */
+    clear(): void;
+    /**
      * Zoom the canvas
      * @param scale a number > 0; to zoom in, provide a value > 1 (2 is a good example), to zoom out provide a value < 1 (e.g. 0.5)
      * @param center center/focus coordinates; typical x range: [0, canvas width/px], typical y range: [0, canvas height/px].

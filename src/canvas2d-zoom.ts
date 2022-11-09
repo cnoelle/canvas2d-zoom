@@ -52,7 +52,7 @@ export class Canvas2dZoom extends HTMLElement {
     readonly #mouseHandler: MouseEventHandler;
     readonly #keyEventListener: any;
     // keys: passed listeners, values: internal listeners
-    readonly #zoomListeners: WeakMap<(stateChange: ZoomPan, width: number, height: number) => void, any> = new WeakMap();
+    readonly #zoomListeners: Map<(stateChange: ZoomPan, width: number, height: number) => void, any> = new Map();
  
     #zoom: boolean = true;
     #lastFocusPoint: Point|null = null;
@@ -437,6 +437,15 @@ export class Canvas2dZoom extends HTMLElement {
     }
 
     /**
+     * Delete all content written previously
+     */
+    clear() {
+        Array.from(this.#zoomListeners.values()).forEach(listener => this.removeEventListener("zoom", listener));
+        this.#zoomListeners.clear();
+        this.#proxy.clear();
+    }
+
+    /**
      * Zoom the canvas
      * @param scale a number > 0; to zoom in, provide a value > 1 (2 is a good example), to zoom out provide a value < 1 (e.g. 0.5)
      * @param center center/focus coordinates; typical x range: [0, canvas width/px], typical y range: [0, canvas height/px].
@@ -485,8 +494,10 @@ export class Canvas2dZoom extends HTMLElement {
      */
     stopDrawCustom(listener: (stateChange: ZoomPan, width: number, height: number) => void): void {
         const internalListener = this.#zoomListeners.get(listener);
-        if (internalListener)
+        if (internalListener) {
             this.removeEventListener("zoom", internalListener);
+            this.#zoomListeners.delete(listener);
+        }
     }
 
 }

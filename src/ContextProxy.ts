@@ -88,6 +88,16 @@ export class ContextProxy implements ProxyHandler<CanvasRenderingContext2D> {
         ctx.restore();
     }
 
+    clear() {
+        if (this.#pipe.length === 0)
+            return;
+        const ctx: CanvasRenderingContext2D = this.#pipe[0].target;
+        this.#pipe.splice(0, this.#pipe.length);
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.clearRect(-this.#clearXBorder, -this.#clearYBorder, ctx.canvas.width + this.#clearXBorder, ctx.canvas.height + this.#clearYBorder);
+        this._eventDispatcher.dispatchEvent(new Event("clear"));
+    }
+
     private _dispatch(ctx: CanvasRenderingContext2D, oldTransform: DOMMatrix, newTransform: DOMMatrix, zoom: boolean, pan: boolean) {
         ctx.save();
         ctx.setTransform(1, 0, 0, 1, 0, 0);
