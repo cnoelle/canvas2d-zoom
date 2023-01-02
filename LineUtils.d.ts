@@ -19,7 +19,11 @@ export interface LabelConfig {
     size?: number;
     position?: LabelPosition;
     lineOffsetFactor?: number;
-    rotated?: boolean;
+    /**
+     * Default: false. If set to true, the label will be rotated with the same angle as the axis against a horizontal line
+     * If a number is provided, the label will be rotated by that angle, in radians
+     */
+    rotated?: boolean|number;
     font?: FontConfig;
     /**
      * See strokeStyle: https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/strokeStyle
@@ -46,6 +50,8 @@ export interface TicksConfig {
     style?: string;
     font?: FontConfig;
     grid?: boolean;
+    /** rotate labels by some angle, in radians */
+    labelRotation?: number;
 }
 export declare type TicksValuesConfig = TicksConfig & ({
     valueRange: [number, number];
@@ -77,8 +83,8 @@ export interface SingleAxisConfig {
     keepOffsetContent?: boolean;
 }
 export interface AxesConfig {
-    x: boolean | Partial<SingleAxisConfig>;
-    y: boolean | Partial<SingleAxisConfig>;
+    x: boolean|(Partial<SingleAxisConfig>&{position?: "bottom"|"top"});
+    y: boolean|(Partial<SingleAxisConfig>&{position?: "left"|"right"});
     font?: FontConfig;
     /**
      * See strokeStyle: https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/strokeStyle

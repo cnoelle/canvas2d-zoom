@@ -438,11 +438,14 @@ export class Canvas2dZoom extends HTMLElement {
 
     /**
      * Delete all content written previously
+     * @param options->keepCustomDrawn: if set to true, then everything added via drawCustom(), incl. axes drawn via LineUtils, will be retained
      */
-    clear() {
-        Array.from(this.#zoomListeners.values()).forEach(listener => this.removeEventListener("zoom", listener));
-        this.#zoomListeners.clear();
-        this.#proxy.clear();
+    clear(options?: {keepCustomDrawn?: boolean}) {
+        if (!options?.keepCustomDrawn) {
+            Array.from(this.#zoomListeners.values()).forEach(listener => this.removeEventListener("zoom", listener));
+            this.#zoomListeners.clear();
+        }
+        this.#proxy.clear({dispatch: options.keepCustomDrawn}); // ensure redrawing of custom elements
     }
 
     /**

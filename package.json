@@ -1,6 +1,6 @@
 {
   "name": "canvas2d-zoom",
-  "version": "0.1.4",
+  "version": "0.1.6",
   "description": "A webcomponent that adds zoom and pan behaviour to a canvas element",
   "type": "module",
   "exports": {

@@ -66,7 +66,7 @@ export class ContextProxy implements ProxyHandler<CanvasRenderingContext2D> {
     }
 
     resetZoom() {
-        if (this.#pipe.length === 0)
+        if (this.#pipe.length === 0) // FIXME problematic, since this may be relevant to custom drawn elements
             return;
         const ctx: CanvasRenderingContext2D = this.#pipe[0].target;
         ctx.restore();
@@ -88,7 +88,7 @@ export class ContextProxy implements ProxyHandler<CanvasRenderingContext2D> {
         ctx.restore();
     }
 
-    clear() {
+    clear(options?: {dispatch?: boolean}) {
         if (this.#pipe.length === 0)
             return;
         const ctx: CanvasRenderingContext2D = this.#pipe[0].target;
@@ -96,6 +96,8 @@ export class ContextProxy implements ProxyHandler<CanvasRenderingContext2D> {
         ctx.setTransform(1, 0, 0, 1, 0, 0);
         ctx.clearRect(-this.#clearXBorder, -this.#clearYBorder, ctx.canvas.width + this.#clearXBorder, ctx.canvas.height + this.#clearYBorder);
         this._eventDispatcher.dispatchEvent(new Event("clear"));
+        if (options?.dispatch)
+            this._dispatch(ctx, ctx.getTransform(), ctx.getTransform(), true, true); // ?
     }
 
     private _dispatch(ctx: CanvasRenderingContext2D, oldTransform: DOMMatrix, newTransform: DOMMatrix, zoom: boolean, pan: boolean) {

@@ -51,8 +51,8 @@ class AxesMgmt {
 
     readonly #x: boolean;
     readonly #y: boolean;
-    readonly #xConfig: SingleAxisConfig;
-    readonly #yConfig: SingleAxisConfig;
+    readonly #xConfig: SingleAxisConfig&{position?: "bottom"|"top"};
+    readonly #yConfig: SingleAxisConfig&{position?: "left"|"right"};
 
     constructor(_config: Partial<AxesConfig>) {
         this.#x = _config?.x !== false;
@@ -116,26 +116,35 @@ class AxesMgmt {
         let yOffset: number = this.#xConfig.offsetBoundary;
         if (yOffset < 0)
             yOffset = Math.min(Math.round(height/10), 50);
+        const isXTop: boolean = this.#x && this.#xConfig.position === "top";
+        const isYRight: boolean = this.#y && this.#yConfig.position === "right";
         if (this.#x) {
             const c: SingleAxisConfig = this.#xConfig;
             if (!c.keepOffsetContent) {
                 // draw a white rectangle
                 ctx.fillStyle = "white";
-                ctx.fillRect(0, height-yOffset, width, height);
+                if (isXTop)
+                    ctx.fillRect(0, 0, width, yOffset);
+                else
+                    ctx.fillRect(0, height-yOffset, width, height);
             }
+            const yPosition: number = isXTop ? yOffset : height - yOffset;
             // @ts-ignore
-            LineUtils._drawLine(ctx, c.offsetDrawn ? 0 : xOffset, height - yOffset, width, height - yOffset, c.lineConfig);
+            LineUtils._drawLine(ctx, isYRight || c.offsetDrawn ? 0 : xOffset, yPosition, isYRight && !c.offsetDrawn ? width - xOffset : width, yPosition, c.lineConfig);
             // @ts-ignore
             if (c.ticks && (c.ticks.values || c.ticks.valueRange)) {
                 const config: TicksConfig = c.ticks as TicksConfig;
-                const tickEndX: number = c.lineConfig?.arrows?.end ? width - xOffset : width;
-                const ticks: Array<Tick> = AxesMgmt._getTickPositions(xOffset, height - yOffset, tickEndX, height - yOffset, config, state.newTransformation);
+                const tickEndX: number = isYRight || c.lineConfig?.arrows?.end ? width - xOffset : width;
+                const tickPosition: LabelPosition = isXTop ? LabelPosition.LEFT : LabelPosition.RIGHT;
+                const tickOffset: number = isXTop ? -config.length : config.length;
+                const ticks: Array<Tick> = AxesMgmt._getTickPositions(isYRight ? 0 : xOffset, yPosition, tickEndX, yPosition, config, state.newTransformation);
+                const gridExtensionY: number = isXTop ? height : 0;
                 for (const tick of ticks) {
                     const lineConfig: Partial<LineConfig> = {};
                     if (tick.label) {
                         lineConfig.label = { // TODO set stroke color, width etc
                             text: tick.label,
-                            position: LabelPosition.LEFT
+                            position: tickPosition
                         };
                         if (config.font)
                             lineConfig.label.font = config.font;
@@ -143,12 +152,14 @@ class AxesMgmt {
                             lineConfig.label.style = config.style;
                             lineConfig.style = config.style;
                         }
+                        if (config.labelRotation)
+                            lineConfig.label.rotated = config.labelRotation;
                     }
                     // @ts-ignore
-                    LineUtils._drawLine(ctx, tick.x, tick.y + config.length, tick.x, tick.y, lineConfig);
+                    LineUtils._drawLine(ctx, tick.x, tick.y + tickOffset, tick.x, tick.y, lineConfig);
                     if (config.grid) {
                         // @ts-ignore
-                        LineUtils._drawLine(ctx, tick.x, tick.y, tick.x, 0, AxesMgmt._GRID_CONFIG);
+                        LineUtils._drawLine(ctx, tick.x, tick.y, tick.x, gridExtensionY, AxesMgmt._GRID_CONFIG);
                     }
                 }
             }
@@ -158,21 +169,28 @@ class AxesMgmt {
             if (!c.keepOffsetContent) {
                 // draw a white rectangle
                 ctx.fillStyle = "white";
-                ctx.fillRect(0, 0, xOffset, height);
+                if (isYRight)
+                    ctx.fillRect(width-xOffset, 0, width, height);
+                else
+                    ctx.fillRect(0, 0, xOffset, height);
             }
+            const xPosition: number = isYRight ? width - xOffset : xOffset;
             // @ts-ignore
-            LineUtils._drawLine(ctx, xOffset, c.offsetDrawn ? height : height - yOffset, xOffset, 0, c.lineConfig);
+            LineUtils._drawLine(ctx, xPosition, isXTop || c.offsetDrawn ? height : height - yOffset, xPosition, isXTop && !c.offsetDrawn ? yOffset : 0, c.lineConfig);
             // @ts-ignore
             if (c.ticks && (c.ticks.values || c.ticks.valueRange)) {
                 const config: TicksConfig = c.ticks as TicksConfig;
-                const tickEndY: number = c.lineConfig?.arrows?.end ? yOffset : 0;
-                const ticks: Array<Tick> = AxesMgmt._getTickPositions(xOffset, height - yOffset, xOffset, tickEndY, config, state.newTransformation);
+                const tickEndY: number = isXTop || c.lineConfig?.arrows?.end ? yOffset : 0;
+                const ticks: Array<Tick> = AxesMgmt._getTickPositions(xPosition, isXTop ? height : height - yOffset, xPosition, tickEndY, config, state.newTransformation);
+                const tickPosition: LabelPosition = isYRight ? LabelPosition.RIGHT : LabelPosition.LEFT;
+                const tickOffset: number =  isYRight ? config.length : -config.length;
+                const gridExtensionX: number = isYRight ? 0 : width;
                 for (const tick of ticks) {
                     const lineConfig: Partial<LineConfig> = {};
                     if (tick.label) {
                         lineConfig.label = { // TODO set stroke color, width etc
                             text: tick.label,
-                            position: LabelPosition.LEFT
+                            position: tickPosition
                         };
                         if (config.font)
                             lineConfig.label.font = config.font;
@@ -180,12 +198,14 @@ class AxesMgmt {
                             lineConfig.label.style = config.style;
                             lineConfig.style = config.style;
                         }
+                        if (config.labelRotation)
+                            lineConfig.label.rotated = config.labelRotation;
                     }
                     // @ts-ignore
-                    LineUtils._drawLine(ctx, tick.x-config.length, tick.y, tick.x, tick.y, lineConfig);
+                    LineUtils._drawLine(ctx, tick.x + tickOffset, tick.y, tick.x, tick.y, lineConfig);
                     if (config.grid) {
                         // @ts-ignore
-                        LineUtils._drawLine(ctx, tick.x, tick.y, width, tick.y, AxesMgmt._GRID_CONFIG);
+                        LineUtils._drawLine(ctx, tick.x, tick.y, gridExtensionX, tick.y, AxesMgmt._GRID_CONFIG);
                     }
                 }
             }
@@ -300,7 +320,11 @@ export interface LabelConfig {
     size?: number; // TODO specify
     position?: LabelPosition;
     lineOffsetFactor?: number;
-    rotated?: boolean; // default: false
+    /**
+     * Default: false. If set to true, the label will be rotated with the same angle as the axis against a horizontal line
+     * If a number is provided, the label will be rotated by that angle, in radians
+     */
+    rotated?: boolean|number;
     font?: FontConfig;
     /**
      * See strokeStyle: https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/strokeStyle
@@ -332,6 +356,8 @@ export interface TicksConfig {
     font?: FontConfig;
     // TODO option to define grid style
     grid?: boolean;
+     /** rotate labels by some angle, in radians */
+    labelRotation?: number;
 }
 
 // FIXME even for string values a zooming effect may be desirable!
@@ -373,8 +399,8 @@ export interface SingleAxisConfig {
 }
 
 export interface AxesConfig {
-    x: boolean|Partial<SingleAxisConfig>;
-    y: boolean|Partial<SingleAxisConfig>;
+    x: boolean|(Partial<SingleAxisConfig>&{position?: "bottom"|"top"});
+    y: boolean|(Partial<SingleAxisConfig>&{position?: "left"|"right"});
     font?: FontConfig;
     /**
      * See strokeStyle: https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/strokeStyle
@@ -489,11 +515,14 @@ export class LineUtils {
             ctx.fillStyle = config.label.style || "black";
             if (config.label.font)
                 ctx.font = LineUtils._toFontString(config.label.font);
-            const position: [number, number] = LineUtils._getLabelPosition(length, angle, config.label, ctx);
-            const rotated: boolean = config.label.rotated;
+            const rotated: boolean|number = config.label.rotated;
+            const angle2 = isFinite(rotated as number) ? angle - (rotated as number) : angle;
+            const position: [number, number] = LineUtils._getLabelPosition(length, angle2, config.label, ctx);
             ctx.translate(position[0], position[1]);
-            if (!rotated && angle !== 0)
+            if ((rotated === false || rotated === undefined) && angle !== 0)
                 ctx.rotate(-angle);
+            else if (isFinite(rotated as number))
+                ctx.rotate(-angle2);
             ctx.fillText(config.label.text, 0, 0);
         }
         ctx.restore();
