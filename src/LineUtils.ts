@@ -144,7 +144,7 @@ class AxesMgmt {
                     if (tick.label) {
                         lineConfig.label = { // TODO set stroke color, width etc
                             text: tick.label,
-                            position: tickPosition
+                            position: /*tickPosition*/ LabelPosition.LEFT // TODO why?
                         };
                         if (config.font)
                             lineConfig.label.font = config.font;
